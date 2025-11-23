@@ -108,15 +108,57 @@ npx dbdock cleanup [options]
 Manage automated backup schedules.
 
 ```bash
-npx dbdock schedule
+dbdock schedule
 ```
 
 This interactive command allows you to:
-- View current schedules
+- View current schedules with status
 - Add new schedules (using cron expressions or presets)
-- Remove existing schedules
+- Remove or toggle (enable/disable) schedules
+- Saves to `dbdock.config.json`
 
-**Note**: Schedules require the DBDock NestJS service to be running to execute.
+### Schedule Presets
+
+- Every hour: `0 * * * *`
+- Every day at midnight: `0 0 * * *`
+- Every day at 2 AM: `0 2 * * *`
+- Every week (Sunday): `0 0 * * 0`
+- Every month (1st): `0 0 1 * *`
+- Custom cron expression
+
+<Warning>
+**Important:** Schedules only execute when DBDock is integrated into your NestJS application (see Programmatic Usage). The CLI is for configuration only.
+</Warning>
+
+## `status`
+
+View all schedules and service status at a glance.
+
+```bash
+dbdock status
+```
+
+### Example Output
+
+```
+📅 Scheduled Backups:
+
+┌─────┬──────────────┬─────────────────┬──────────┐
+│  #  │ Name         │ Cron Expression │ Status   │
+├─────┼──────────────┼─────────────────┼──────────┤
+│   1 │ daily        │ 0 * * * *       │ ✓ Active │
+│   2 │ weekly       │ 0 0 * * 0       │ ✗ Paused │
+└─────┴──────────────┴─────────────────┴──────────┘
+
+Total: 2 schedule(s) - 1 active, 1 paused
+
+🚀 Service Status:
+
+🟢 Running (PM2)
+  PID: 12345
+  Uptime: 2d 5h
+  Memory: 45.23 MB
+```
 
 ## `test`
 
@@ -127,3 +169,4 @@ npx dbdock test
 ```
 
 Checks database connection, storage access, and email configuration.
+

@@ -5,7 +5,7 @@ description: 'Integrate DBdocks into your NestJS applications'
 
 DBDock offers a native NestJS module for seamless integration into your backend applications.
 
-## Setup
+## NestJS Integration
 
 Import the `DBDockModule` in your `AppModule`.
 
@@ -17,11 +17,12 @@ import { DBDockModule } from 'dbdock';
   imports: [
     DBDockModule.forRoot({
       database: {
+        type: 'postgres',
         host: 'localhost',
         port: 5432,
         username: 'postgres',
-        password: 'password',
-        database: 'myapp',
+        password: process.env.DB_PASSWORD,
+        database: 'myapp'
       },
       storage: {
         provider: 's3',
@@ -29,14 +30,15 @@ import { DBDockModule } from 'dbdock';
           bucket: 'my-backups',
           region: 'us-east-1',
           accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        },
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        }
       },
       backup: {
         compression: { enabled: true, level: 6 },
         encryption: { enabled: true, key: process.env.ENCRYPTION_KEY },
         schedules: [
-          { name: 'Daily', cron: '0 2 * * *', enabled: true }
+          { name: 'Daily Backup', cron: '0 2 * * *', enabled: true },
+          { name: 'Weekly Full', cron: '0 0 * * 0', enabled: true }
         ]
       },
     }),
@@ -45,7 +47,7 @@ import { DBDockModule } from 'dbdock';
 export class AppModule {}
 ```
 
-## Using the Service
+## Creating and Restoring Backups
 
 Inject the `BackupService` to trigger backups or restores programmatically.
 
@@ -58,12 +60,13 @@ export class MyService {
   constructor(private backupService: BackupService) {}
 
   async createBackup() {
-    try {
-      const result = await this.backupService.createBackup();
-      console.log('Backup created:', result.id);
-    } catch (error) {
-      console.error('Backup failed:', error);
-    }
+    const result = await this.backupService.createBackup({
+      compress: true,
+      encrypt: true
+    });
+
+    console.log(`Backup created: ${result.metadata.id}`);
+    return result;
   }
 
   async restore(backupId: string) {
@@ -72,6 +75,75 @@ export class MyService {
 }
 ```
 
-## Schedules
+## Schedule Management API
 
+Manage backup schedules programmatically using the `ScheduleManager`.
+
+```typescript
+import { ScheduleManager } from 'dbdock';
+
+const scheduleManager = new ScheduleManager();
+
+// Add a new schedule
+scheduleManager.addSchedule({
+  name: 'Hourly Backup',
+  cron: '0 * * * *',
+  enabled: true
+});
+
+// Get all schedules
+const schedules = scheduleManager.getSchedules();
+console.log('All schedules:', schedules);
+
+// Update a schedule
+scheduleManager.updateSchedule('Hourly Backup', {
+  cron: '0 */2 * * *'
+});
+
+// Enable/disable schedules
+scheduleManager.enableSchedule('Daily Backup');
+scheduleManager.disableSchedule('Weekly Full');
+
+// Remove a schedule
+scheduleManager.removeSchedule('Old Schedule');
+```
+
+## Complete Example with Schedules
+
+Here's a complete example showing how to set up DBDock with scheduled backups in your NestJS application:
+
+```typescript
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ScheduleManager } from 'dbdock';
+
+async function bootstrap() {
+  const scheduleManager = new ScheduleManager();
+
+  // Add daily backup schedule
+  scheduleManager.addSchedule({
+    name: 'Daily Backup',
+    cron: '0 2 * * *',
+    enabled: true
+  });
+
+  // Add weekly archive schedule
+  scheduleManager.addSchedule({
+    name: 'Weekly Archive',
+    cron: '0 0 * * 0',
+    enabled: true
+  });
+
+  const app = await NestFactory.create(AppModule);
+  await app.listen(3000);
+
+  console.log('Application started with scheduled backups');
+}
+
+bootstrap();
+```
+
+<Note>
 When using the NestJS module, configured schedules are automatically handled by the service. Ensure your application is running for the scheduled backups to execute.
+</Note>
+

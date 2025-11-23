@@ -33,7 +33,8 @@
             "pages": [
               "cli-commands",
               "configuration",
-              "programmatic-usage"
+              "programmatic-usage",
+              "troubleshooting"
             ]
           }
         ]

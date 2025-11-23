@@ -1,0 +1,138 @@
+---
+title: 'Troubleshooting'
+description: 'Common issues and solutions for DBDock'
+---
+
+Run `npx dbdock test` to verify your configuration and diagnose issues.
+
+## Common Issues
+
+### pg_dump not found
+
+If you see an error that `pg_dump` command is not found, you need to install PostgreSQL client tools.
+
+<AccordionGroup>
+  <Accordion title="macOS">
+    ```bash
+    brew install postgresql
+    ```
+  </Accordion>
+
+  <Accordion title="Ubuntu/Debian">
+    ```bash
+    sudo apt-get install postgresql-client
+    ```
+  </Accordion>
+
+  <Accordion title="Windows">
+    Download and install from [PostgreSQL Downloads](https://www.postgresql.org/download/windows/)
+  </Accordion>
+</AccordionGroup>
+
+## Database Connection Errors
+
+If you're experiencing database connection issues:
+
+1. **Verify credentials** - Check `host`, `port`, `username`, `password`, and `database` in your config
+2. **Test connection manually**:
+   ```bash
+   psql -h HOST -p PORT -U USERNAME -d DATABASE
+   ```
+3. **Check PostgreSQL server** - Ensure the server is running
+4. **Network/Firewall** - Verify network connectivity and firewall rules allow the connection
+
+## Storage Errors
+
+### AWS S3
+
+<Steps>
+  <Step title="Verify credentials">
+    Ensure your AWS access key ID and secret access key are correct
+  </Step>
+  
+  <Step title="Check IAM permissions">
+    Your IAM user must have these permissions:
+    - `s3:PutObject` - Upload backups
+    - `s3:GetObject` - Download backups
+    - `s3:ListBucket` - List available backups
+    - `s3:DeleteObject` - Delete old backups
+  </Step>
+  
+  <Step title="Verify bucket configuration">
+    - Check bucket name is correct
+    - Verify region matches your bucket's region
+    - Ensure bucket exists and is accessible
+  </Step>
+</Steps>
+
+### Cloudflare R2
+
+<Warning>
+Common R2 issues and solutions
+</Warning>
+
+- **Verify API token** - Ensure your R2 API token is correct and has not expired
+- **Check endpoint URL** - Must be in format: `https://ACCOUNT_ID.r2.cloudflarestorage.com`
+- **Bucket access** - Ensure bucket exists and is accessible
+- **Permissions** - Verify R2 credentials have read/write permissions
+- **Restore issues** - Ensure backups are in `dbdock_backups/` folder with `.sql` extension
+
+### Cloudinary
+
+- **Verify credentials** - Check cloud name, API key, and API secret are correct
+- **Account status** - Ensure your Cloudinary account is active
+- **API access** - Verify API credentials have media library access permissions
+
+## Encryption Key Errors
+
+Encryption keys must be exactly 64 hexadecimal characters (0-9, a-f, A-F).
+
+**Generate a valid key:**
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+<Note>
+Store your encryption key securely. If you lose it, you won't be able to restore encrypted backups.
+</Note>
+
+## No Backups Found
+
+If DBDock can't find your backups:
+
+<CardGroup cols={2}>
+  <Card title="Local Storage" icon="folder">
+    - Check files exist in configured path
+    - Verify file permissions allow reading
+    - Ensure files match pattern: `backup-*.sql`
+  </Card>
+  
+  <Card title="S3/R2" icon="cloud">
+    - Verify files are in `dbdock_backups/` folder
+    - Check bucket name and region are correct
+    - Ensure files match pattern: `backup-*.sql`
+  </Card>
+  
+  <Card title="Cloudinary" icon="image">
+    - Check Media Library for `dbdock_backups` folder
+    - Verify cloud name is correct
+    - Ensure files match pattern: `backup-*.sql`
+  </Card>
+  
+  <Card title="File Naming" icon="file">
+    All backups must follow the naming pattern:
+    `backup-YYYY-MM-DD-HH-MM-SS-BACKUPID.sql`
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+DBDock provides clear, actionable error messages for most issues. If you're still experiencing problems:
+
+- 💬 **[Ask in Discussions](https://github.com/naheemolaide/dbdock-support/discussions)** - Get help from the community
+- 🐛 **[Report an Issue](https://github.com/naheemolaide/dbdock-support/issues)** - Report bugs or request features
+- 📚 **[Read the Docs](https://dbdock.mintlify.app)** - Browse the full documentation
+
+<Tip>
+When reporting issues, include the output of `npx dbdock test` to help diagnose the problem faster.
+</Tip>

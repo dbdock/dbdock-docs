@@ -121,12 +121,47 @@ Control how backups are created and retained.
 }
 ```
 
+### Backup Formats
+
+DBDock supports multiple PostgreSQL backup formats:
+
+- `custom` (default) - PostgreSQL custom binary format (.sql)
+- `plain` - Plain SQL text format (.sql)
+- `directory` - Directory format (.dir)
+- `tar` - Tar archive format (.tar)
+
+### Encryption Key
+
+Generate a secure 64-character hexadecimal encryption key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+The key must be exactly 64 hexadecimal characters (0-9, a-f, A-F).
+
 ### Retention Policy
 
+Automatic cleanup to prevent storage bloat from frequent backups.
+
+**How it works:**
+- Keeps most recent `minBackups` (safety net, never deleted)
+- Deletes backups exceeding `maxBackups` limit (oldest first)
+- Deletes backups older than `maxAgeDays` (respecting minBackups)
+- Runs automatically after each backup (if `runAfterBackup: true`)
+- Manual cleanup: `npx dbdock cleanup`
+
+**Configuration:**
 - **maxBackups**: Maximum number of backups to keep.
 - **maxAgeDays**: Delete backups older than this many days.
 - **minBackups**: Always keep at least this many recent backups, regardless of age.
 - **runAfterBackup**: If true, cleanup runs automatically after every successful backup.
+
+**Safety features:**
+- Always preserves `minBackups` most recent backups
+- Shows preview before deletion
+- Detailed logging of what was deleted
+- Error handling for failed deletions
 
 ## Alerts
 
@@ -150,3 +185,16 @@ Configure email notifications for backup events.
   }
 }
 ```
+
+## Storage Permissions
+
+### AWS S3
+
+Required IAM permissions for S3 storage:
+- `s3:PutObject` - Upload backups
+- `s3:GetObject` - Download backups
+- `s3:ListBucket` - List available backups
+- `s3:DeleteObject` - Delete old backups
+
+All cloud backups are stored in the `dbdock_backups/` folder with format: `backup-YYYY-MM-DD-HH-MM-SS-BACKUPID.sql`
+
