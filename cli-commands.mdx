@@ -1,0 +1,129 @@
+---
+title: 'CLI Commands'
+description: 'Comprehensive guide to DBdocks CLI commands'
+---
+
+## `init`
+
+Initialize DBdocks in your project.
+
+```bash
+npx dbdock init
+```
+
+This interactive wizard creates the `dbdock.config.json` file. It asks for:
+- Database connection details
+- Storage provider configuration
+- Encryption and compression preferences
+- Email alert settings
+
+## `backup`
+
+Create a new database backup.
+
+```bash
+npx dbdock backup [options]
+```
+
+### Options
+
+| Option | Description |
+| :--- | :--- |
+| `--encrypt` / `--no-encrypt` | Toggle encryption (overrides config) |
+| `--compress` / `--no-compress` | Toggle compression (overrides config) |
+| `--encryption-key <key>` | Specify a 64-char hex encryption key |
+| `--compression-level <1-11>` | Set compression level (default: 6) |
+
+### Example
+
+```bash
+npx dbdock backup --encrypt --compress --compression-level 9
+```
+
+## `restore`
+
+Restore a database from a backup.
+
+```bash
+npx dbdock restore
+```
+
+This command launches an interactive interface to select a backup. It supports smart filtering for large numbers of backups.
+
+## `list`
+
+List available backups.
+
+```bash
+npx dbdock list [options]
+```
+
+### Options
+
+| Option | Description |
+| :--- | :--- |
+| `--recent <number>` | Show the last N backups |
+| `--search <keyword>` | Search backups by keyword or ID |
+| `--days <number>` | Show backups from the last N days |
+
+### Examples
+
+```bash
+npx dbdock list --recent 10
+npx dbdock list --search "pre-deploy"
+```
+
+## `delete`
+
+Delete backups.
+
+```bash
+npx dbdock delete [options]
+```
+
+### Options
+
+| Option | Description |
+| :--- | :--- |
+| `--key <id>` | Delete a specific backup by ID |
+| `--all` | Delete all backups (requires confirmation) |
+
+## `cleanup`
+
+Manually trigger the retention policy cleanup.
+
+```bash
+npx dbdock cleanup [options]
+```
+
+### Options
+
+| Option | Description |
+| :--- | :--- |
+| `--dry-run` | Preview what would be deleted without taking action |
+| `--force` | Skip confirmation prompt |
+
+## `schedule`
+
+Manage automated backup schedules.
+
+```bash
+npx dbdock schedule
+```
+
+This interactive command allows you to:
+- View current schedules
+- Add new schedules (using cron expressions or presets)
+- Remove existing schedules
+
+**Note**: Schedules require the DBDock NestJS service to be running to execute.
+
+## `test`
+
+Validate your configuration.
+
+```bash
+npx dbdock test
+```
+
+Checks database connection, storage access, and email configuration.

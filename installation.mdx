@@ -1,0 +1,47 @@
+---
+title: 'Installation'
+description: 'How to install DBdocks CLI'
+---
+
+## Global Installation
+
+You can install the DBdocks CLI globally on your machine using npm. This allows you to run `dbdock` commands from anywhere.
+
+```bash
+npm install -g dbdock
+```
+
+Once installed, you can verify the installation by running:
+
+```bash
+dbdock --version
+```
+
+## Usage with npx
+
+Alternatively, you can use `npx` to run DBdocks without installing it globally. This ensures you are always using the latest version.
+
+```bash
+npx dbdock init
+npx dbdock backup
+```
+
+## System Requirements
+
+- **Node.js**: Version 18 or higher.
+- **PostgreSQL**: Version 12 or higher.
+- **OS**: macOS, Linux, or Windows.
+
+## Troubleshooting Installation
+
+If you encounter issues during installation, ensure your Node.js version is up to date.
+
+```bash
+node -v
+```
+
+If you see an error related to permissions, you might need to run the install command with `sudo` (on macOS/Linux) or run your command prompt as Administrator (on Windows).
+
+```bash
+sudo npm install -g dbdock
+```

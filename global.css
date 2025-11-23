@@ -1,0 +1,7 @@
+/* Increase logo size */
+a[href="/"] img, 
+a[href="/"] svg {
+  height: 3rem !important;
+  max-height: 4rem !important;
+  width: auto !important;
+}

@@ -1,0 +1,12 @@
+{
+    "name": "dbdock-docs",
+    "version": "0.0.1",
+    "description": "Documentation for DBdocks",
+    "scripts": {
+        "dev": "npx mintlify dev",
+        "start": "npx mintlify dev"
+    },
+    "dependencies": {
+        "mintlify": "^4.0.0"
+    }
+}

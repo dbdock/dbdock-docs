@@ -1,97 +1,76 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Introduction
+description: 'Enterprise-grade PostgreSQL backup and restore with a beautiful CLI.'
 ---
 
-## Setting up
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.png"
+  alt="Hero Light"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.png"
+  alt="Hero Dark"
+/>
 
-Get your documentation site up and running in minutes.
+## Features
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+DBDock provides a robust solution for managing your PostgreSQL backups with ease and style.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
+    title="Beautiful CLI"
     icon="terminal"
-    href="/api-reference/introduction"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Real-time progress bars, speed tracking, and smart filtering for a superior developer experience.
   </Card>
   <Card
-    title="Code samples"
+    title="Multiple Storage Providers"
+    icon="cloud"
+  >
+    Support for Local storage, AWS S3, Cloudflare R2, and Cloudinary out of the box.
+  </Card>
+  <Card
+    title="Security First"
+    icon="shield-check"
+  >
+    AES-256 encryption and Brotli compression to keep your data safe and efficient.
+  </Card>
+  <Card
+    title="Smart Retention"
+    icon="clock-rotate-left"
+  >
+    Automatic cleanup policies by count or age with built-in safety nets.
+  </Card>
+  <Card
+    title="Email Alerts"
+    icon="envelope"
+  >
+    SMTP notifications with custom templates to keep you informed.
+  </Card>
+  <Card
+    title="TypeScript Native"
     icon="code"
-    href="/essentials/code"
   >
-    Add sample code to demonstrate how to use your product.
+    Full type safety for programmatic usage in your Node.js/NestJS applications.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Quick Start
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Get up and running with DBDock in seconds.
+
+```bash
+npx dbdock init      # Interactive setup
+npx dbdock backup    # Create backup
+npx dbdock restore   # Restore backup
+```
+
+## Installation
+
+Install the CLI globally or use it directly with `npx`.
+
+```bash
+npm install -g dbdock
+```
