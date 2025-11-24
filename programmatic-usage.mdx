@@ -1,149 +1,358 @@
 ---
 title: 'Programmatic Usage'
-description: 'Integrate DBdocks into your NestJS applications'
+description: 'Integrate DBDock into your Node.js applications'
 ---
 
-DBDock offers a native NestJS module for seamless integration into your backend applications.
+Use DBDock in your Node.js application to create backups programmatically. You don't need to understand NestJS internals - DBDock provides a simple API that works with any Node.js backend.
 
-## NestJS Integration
+## Basic Setup
 
-Import the `DBDockModule` in your `AppModule`.
+First, install DBDock:
 
-```typescript
-import { Module } from '@nestjs/common';
-import { DBDockModule } from 'dbdock';
-
-@Module({
-  imports: [
-    DBDockModule.forRoot({
-      database: {
-        type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        username: 'postgres',
-        password: process.env.DB_PASSWORD,
-        database: 'myapp'
-      },
-      storage: {
-        provider: 's3',
-        s3: {
-          bucket: 'my-backups',
-          region: 'us-east-1',
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-      },
-      backup: {
-        compression: { enabled: true, level: 6 },
-        encryption: { enabled: true, key: process.env.ENCRYPTION_KEY },
-        schedules: [
-          { name: 'Daily Backup', cron: '0 2 * * *', enabled: true },
-          { name: 'Weekly Full', cron: '0 0 * * 0', enabled: true }
-        ]
-      },
-    }),
-  ],
-})
-export class AppModule {}
+```bash
+npm install dbdock
 ```
 
-## Creating and Restoring Backups
+Make sure you have `dbdock.config.json` configured (run `npx dbdock init` first). DBDock reads all configuration from this file automatically.
 
-Inject the `BackupService` to trigger backups or restores programmatically.
+## How It Works
 
-```typescript
-import { Injectable } from '@nestjs/common';
-import { BackupService } from 'dbdock';
+DBDock uses a simple initialization pattern:
 
-@Injectable()
-export class MyService {
-  constructor(private backupService: BackupService) {}
+1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json`)
+2. Get the `BackupService` from the returned context using `.get(BackupService)`
+3. Use the service methods to create backups, list backups, etc.
 
-  async createBackup() {
-    const result = await this.backupService.createBackup({
-      compress: true,
-      encrypt: true
-    });
+Think of `createDBDock()` as a factory function that sets up everything for you based on your config file.
 
-    console.log(`Backup created: ${result.metadata.id}`);
-    return result;
-  }
+## Creating Backups
 
-  async restore(backupId: string) {
-    await this.backupService.restoreBackup(backupId);
-  }
-}
-```
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
 
-## Schedule Management API
+async function createBackup() {
+  const dbdock = await createDBDock();
+  const backupService = dbdock.get(BackupService);
 
-Manage backup schedules programmatically using the `ScheduleManager`.
-
-```typescript
-import { ScheduleManager } from 'dbdock';
-
-const scheduleManager = new ScheduleManager();
-
-// Add a new schedule
-scheduleManager.addSchedule({
-  name: 'Hourly Backup',
-  cron: '0 * * * *',
-  enabled: true
-});
-
-// Get all schedules
-const schedules = scheduleManager.getSchedules();
-console.log('All schedules:', schedules);
-
-// Update a schedule
-scheduleManager.updateSchedule('Hourly Backup', {
-  cron: '0 */2 * * *'
-});
-
-// Enable/disable schedules
-scheduleManager.enableSchedule('Daily Backup');
-scheduleManager.disableSchedule('Weekly Full');
-
-// Remove a schedule
-scheduleManager.removeSchedule('Old Schedule');
-```
-
-## Complete Example with Schedules
-
-Here's a complete example showing how to set up DBDock with scheduled backups in your NestJS application:
-
-```typescript
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ScheduleManager } from 'dbdock';
-
-async function bootstrap() {
-  const scheduleManager = new ScheduleManager();
-
-  // Add daily backup schedule
-  scheduleManager.addSchedule({
-    name: 'Daily Backup',
-    cron: '0 2 * * *',
-    enabled: true
+  const result = await backupService.createBackup({
+    compress: true,
+    encrypt: true,
   });
 
-  // Add weekly archive schedule
-  scheduleManager.addSchedule({
-    name: 'Weekly Archive',
-    cron: '0 0 * * 0',
-    enabled: true
-  });
-
-  const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
-
-  console.log('Application started with scheduled backups');
+  console.log(`Backup created: ${result.metadata.id}`);
+  console.log(`Size: ${result.metadata.size} bytes`);
+  return result;
 }
 
-bootstrap();
+createBackup().catch(console.error);
+```
+
+**Backup Options:**
+
+- `compress` - Enable/disable compression (default: from config)
+- `encrypt` - Enable/disable encryption (default: from config)
+- `type` - Backup type: `'full'` (default), `'schema'`, `'data'`
+
+## Listing Backups
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+async function listBackups() {
+  const dbdock = await createDBDock();
+  const backupService = dbdock.get(BackupService);
+
+  const backups = await backupService.listBackups();
+  
+  console.log(`Found ${backups.length} backups:`);
+  backups.forEach(backup => {
+    console.log(`- ${backup.id} (${backup.size} bytes, created: ${backup.startTime})`);
+  });
+  
+  return backups;
+}
+
+listBackups().catch(console.error);
+```
+
+## Getting Backup Metadata
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+async function getBackupInfo(backupId) {
+  const dbdock = await createDBDock();
+  const backupService = dbdock.get(BackupService);
+
+  const metadata = await backupService.getBackupMetadata(backupId);
+  
+  if (!metadata) {
+    console.log('Backup not found');
+    return null;
+  }
+  
+  console.log('Backup details:', {
+    id: metadata.id,
+    size: metadata.size,
+    created: metadata.startTime,
+    encrypted: !!metadata.encryption,
+    compressed: metadata.compression.enabled,
+  });
+  
+  return metadata;
+}
+
+getBackupInfo('your-backup-id').catch(console.error);
 ```
 
 <Note>
-When using the NestJS module, configured schedules are automatically handled by the service. Ensure your application is running for the scheduled backups to execute.
+Restore functionality is currently only available via CLI (`npx dbdock restore`). Programmatic restore will be available in a future release.
 </Note>
 
+## Express.js Integration
+
+Here's a complete Express.js example with backup endpoints:
+
+```bash
+npm install dbdock express
+```
+
+```javascript
+const express = require('express');
+const { createDBDock, BackupService } = require('dbdock');
+
+const app = express();
+app.use(express.json());
+
+let backupService = null;
+
+async function initializeDBDock() {
+  const dbdock = await createDBDock();
+  backupService = dbdock.get(BackupService);
+  console.log('DBDock initialized successfully');
+}
+
+app.post('/api/backup', async (req, res) => {
+  try {
+    if (!backupService) {
+      return res.status(503).json({ 
+        success: false, 
+        error: 'DBDock not initialized' 
+      });
+    }
+
+    const result = await backupService.createBackup({
+      compress: req.body.compress !== false,
+      encrypt: req.body.encrypt !== false,
+    });
+
+    res.json({
+      success: true,
+      backupId: result.metadata.id,
+      size: result.metadata.size,
+      message: 'Backup created successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/api/backups', async (req, res) => {
+  try {
+    if (!backupService) {
+      return res.status(503).json({ 
+        success: false, 
+        error: 'DBDock not initialized' 
+      });
+    }
+
+    const backups = await backupService.listBackups();
+    res.json({ success: true, backups });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/api/backups/:backupId', async (req, res) => {
+  try {
+    if (!backupService) {
+      return res.status(503).json({ 
+        success: false, 
+        error: 'DBDock not initialized' 
+      });
+    }
+
+    const metadata = await backupService.getBackupMetadata(req.params.backupId);
+    
+    if (!metadata) {
+      return res.status(404).json({
+        success: false,
+        error: 'Backup not found',
+      });
+    }
+
+    res.json({ success: true, backup: metadata });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+
+initializeDBDock()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to initialize DBDock:', error);
+    process.exit(1);
+  });
+```
+
+## Schedule Management
+
+DBDock stores schedules in `dbdock.config.json` - the same file used by the CLI. This means schedules created via CLI or code are always in sync.
+
+**Managing Schedules:**
+
+```javascript
+const { ScheduleManager } = require('dbdock');
+
+const scheduleManager = new ScheduleManager();
+
+scheduleManager.addSchedule({
+  name: 'Hourly Backup',
+  cron: '0 * * * *',
+  enabled: true,
+});
+
+const schedules = scheduleManager.getSchedules();
+console.log('All schedules:', schedules);
+
+scheduleManager.updateSchedule('Hourly Backup', {
+  cron: '0 */2 * * *',
+});
+
+scheduleManager.enableSchedule('Daily Backup');
+scheduleManager.disableSchedule('Weekly Full');
+
+scheduleManager.removeSchedule('Old Schedule');
+```
+
+**ScheduleManager Methods:**
+
+- `getSchedules()` - Get all schedules
+- `addSchedule(schedule)` - Add a new schedule
+- `updateSchedule(name, updates)` - Update an existing schedule
+- `removeSchedule(name)` - Remove a schedule
+- `enableSchedule(name)` - Enable a schedule
+- `disableSchedule(name)` - Disable a schedule
+- `getSchedule(name)` - Get a specific schedule
+
+**Custom Config Path:**
+
+```javascript
+const scheduleManager = new ScheduleManager('/path/to/custom-config.json');
+```
+
+## Scheduled Backups with Express
+
+Set up automatic backups using `node-cron`:
+
+```bash
+npm install dbdock express node-cron
+```
+
+```javascript
+const express = require('express');
+const cron = require('node-cron');
+const { createDBDock, BackupService, ScheduleManager } = require('dbdock');
+
+const app = express();
+app.use(express.json());
+
+let backupService = null;
+
+async function initializeDBDock() {
+  const dbdock = await createDBDock();
+  backupService = dbdock.get(BackupService);
+  console.log('DBDock initialized successfully');
+}
+
+function setupScheduledBackups() {
+  const scheduleManager = new ScheduleManager();
+  const schedules = scheduleManager.getSchedules();
+
+  schedules.forEach((schedule) => {
+    if (schedule.enabled) {
+      cron.schedule(schedule.cron, async () => {
+        try {
+          console.log(`Running scheduled backup: ${schedule.name}`);
+          const result = await backupService.createBackup({
+            compress: true,
+            encrypt: true,
+          });
+          console.log(`Scheduled backup completed: ${result.metadata.id}`);
+        } catch (error) {
+          console.error(`Scheduled backup failed: ${error.message}`);
+        }
+      });
+      console.log(`Scheduled backup "${schedule.name}" registered`);
+    }
+  });
+}
+
+app.post('/api/backup', async (req, res) => {
+  try {
+    if (!backupService) {
+      return res.status(503).json({ error: 'DBDock not initialized' });
+    }
+    const result = await backupService.createBackup({
+      compress: true,
+      encrypt: true,
+    });
+    res.json({
+      success: true,
+      backupId: result.metadata.id,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+
+initializeDBDock()
+  .then(() => {
+    setupScheduledBackups();
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT} with scheduled backups`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to initialize DBDock:', error);
+    process.exit(1);
+  });
+```
+
+**How It Works:**
+
+1. `ScheduleManager` reads schedules from `dbdock.config.json` (same file used by CLI)
+2. Your Express app sets up cron jobs based on those schedules
+3. When schedules change (via CLI or code), restart your app to pick up changes
+4. All schedule management writes directly to `dbdock.config.json`
+
+<Warning>
+**Important:** Schedules only execute when your Node.js application is running. The CLI `dbdock schedule` command only manages the configuration - your application code runs the actual backups.
+</Warning>
