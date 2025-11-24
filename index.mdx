@@ -399,12 +399,15 @@ async function createBackup() {
   const backupService = dbdock.get(BackupService);
 
   const result = await backupService.createBackup({
+    format: 'plain',
     compress: true,
     encrypt: true,
   });
 
   console.log(`Backup created: ${result.metadata.id}`);
-  console.log(`Size: ${result.metadata.size} bytes`);
+  console.log(`Size: ${result.metadata.formattedSize}`);
+  console.log(`Path: ${result.storageKey}`);
+  
   return result;
 }
 
@@ -415,6 +418,7 @@ createBackup().catch(console.error);
 
 - `compress` - Enable/disable compression (default: from config)
 - `encrypt` - Enable/disable encryption (default: from config)
+- `format` - Backup format: `'custom'` (default), `'plain'`, `'directory'`, `'tar'`
 - `type` - Backup type: `'full'` (default), `'schema'`, `'data'`
 
 ### Listing Backups
@@ -427,12 +431,20 @@ async function listBackups() {
   const backupService = dbdock.get(BackupService);
 
   const backups = await backupService.listBackups();
-  
+
   console.log(`Found ${backups.length} backups:`);
-  backups.forEach(backup => {
-    console.log(`- ${backup.id} (${backup.size} bytes, created: ${backup.startTime})`);
-  });
-  
+  backups.forEach(
+    (backup: {
+      id: string;
+      formattedSize: string;
+      startTime: string | Date;
+    }) => {
+      console.log(
+        `- ${backup.id} (${backup.formattedSize}, created: ${backup.startTime})`
+      );
+    }
+  );
+
   return backups;
 }
 
@@ -471,251 +483,52 @@ getBackupInfo('your-backup-id').catch(console.error);
 
 **Note:** Restore functionality is currently only available via CLI (`npx dbdock restore`). Programmatic restore will be available in a future release.
 
-### Express.js Integration
+### Scheduling Backups
 
-Here's a complete Express.js example with backup endpoints:
+DBDock doesn't include a built-in scheduler (to keep the package lightweight), but it's easy to schedule backups using `node-cron`.
 
-```bash
-npm install dbdock express
-```
-
-```javascript
-const express = require('express');
-const { createDBDock, BackupService } = require('dbdock');
-
-const app = express();
-app.use(express.json());
-
-let backupService = null;
-
-async function initializeDBDock() {
-  const dbdock = await createDBDock();
-  backupService = dbdock.get(BackupService);
-  console.log('DBDock initialized successfully');
-}
-
-app.post('/api/backup', async (req, res) => {
-  try {
-    if (!backupService) {
-      return res.status(503).json({ 
-        success: false, 
-        error: 'DBDock not initialized' 
-      });
-    }
-
-    const result = await backupService.createBackup({
-      compress: req.body.compress !== false,
-      encrypt: req.body.encrypt !== false,
-    });
-
-    res.json({
-      success: true,
-      backupId: result.metadata.id,
-      size: result.metadata.size,
-      message: 'Backup created successfully',
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-app.get('/api/backups', async (req, res) => {
-  try {
-    if (!backupService) {
-      return res.status(503).json({ 
-        success: false, 
-        error: 'DBDock not initialized' 
-      });
-    }
-
-    const backups = await backupService.listBackups();
-    res.json({ success: true, backups });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-app.get('/api/backups/:backupId', async (req, res) => {
-  try {
-    if (!backupService) {
-      return res.status(503).json({ 
-        success: false, 
-        error: 'DBDock not initialized' 
-      });
-    }
-
-    const metadata = await backupService.getBackupMetadata(req.params.backupId);
-    
-    if (!metadata) {
-      return res.status(404).json({
-        success: false,
-        error: 'Backup not found',
-      });
-    }
-
-    res.json({ success: true, backup: metadata });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-
-initializeDBDock()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error('Failed to initialize DBDock:', error);
-    process.exit(1);
-  });
-```
-
-### Schedule Management
-
-DBDock stores schedules in `dbdock.config.json` - the same file used by the CLI. This means schedules created via CLI or code are always in sync.
-
-**Managing Schedules:**
-
-```javascript
-const { ScheduleManager } = require('dbdock');
-
-const scheduleManager = new ScheduleManager();
-
-scheduleManager.addSchedule({
-  name: 'Hourly Backup',
-  cron: '0 * * * *',
-  enabled: true,
-});
-
-const schedules = scheduleManager.getSchedules();
-console.log('All schedules:', schedules);
-
-scheduleManager.updateSchedule('Hourly Backup', {
-  cron: '0 */2 * * *',
-});
-
-scheduleManager.enableSchedule('Daily Backup');
-scheduleManager.disableSchedule('Weekly Full');
-
-scheduleManager.removeSchedule('Old Schedule');
-```
-
-**ScheduleManager Methods:**
-
-- `getSchedules()` - Get all schedules
-- `addSchedule(schedule)` - Add a new schedule
-- `updateSchedule(name, updates)` - Update an existing schedule
-- `removeSchedule(name)` - Remove a schedule
-- `enableSchedule(name)` - Enable a schedule
-- `disableSchedule(name)` - Disable a schedule
-- `getSchedule(name)` - Get a specific schedule
-
-**Custom Config Path:**
-
-```javascript
-const scheduleManager = new ScheduleManager('/path/to/custom-config.json');
-```
-
-### Scheduled Backups with Express
-
-Set up automatic backups using `node-cron`:
+First, install `node-cron`:
 
 ```bash
-npm install dbdock express node-cron
+npm install node-cron
+npm install --save-dev @types/node-cron
 ```
 
-```javascript
-const express = require('express');
-const cron = require('node-cron');
-const { createDBDock, BackupService, ScheduleManager } = require('dbdock');
+Then create a scheduler script (e.g., `scheduler.ts`):
 
-const app = express();
-app.use(express.json());
+```typescript
+import { createDBDock, BackupService } from 'dbdock';
+import * as cron from 'node-cron';
 
-let backupService = null;
-
-async function initializeDBDock() {
+async function startScheduler() {
   const dbdock = await createDBDock();
-  backupService = dbdock.get(BackupService);
-  console.log('DBDock initialized successfully');
-}
+  const backupService = dbdock.get(BackupService);
 
-function setupScheduledBackups() {
-  const scheduleManager = new ScheduleManager();
-  const schedules = scheduleManager.getSchedules();
+  console.log('🚀 Backup scheduler started. Running every minute...');
 
-  schedules.forEach((schedule) => {
-    if (schedule.enabled) {
-      cron.schedule(schedule.cron, async () => {
-        try {
-          console.log(`Running scheduled backup: ${schedule.name}`);
-          const result = await backupService.createBackup({
-            compress: true,
-            encrypt: true,
-          });
-          console.log(`Scheduled backup completed: ${result.metadata.id}`);
-        } catch (error) {
-          console.error(`Scheduled backup failed: ${error.message}`);
-        }
+  cron.schedule('* * * * *', async () => {
+    try {
+      console.log('\n⏳ Starting scheduled backup...');
+      
+      const result = await backupService.createBackup({
+        format: 'plain',
+        compress: true,
+        encrypt: true,
       });
-      console.log(`Scheduled backup "${schedule.name}" registered`);
+
+      console.log(`✅ Backup successful: ${result.metadata.id}`);
+      console.log(`📦 Size: ${result.metadata.formattedSize}`);
+      console.log(`📂 Path: ${result.storageKey}`);
+    } catch (error) {
+      console.error('❌ Backup failed:', error);
     }
   });
 }
 
-app.post('/api/backup', async (req, res) => {
-  try {
-    if (!backupService) {
-      return res.status(503).json({ error: 'DBDock not initialized' });
-    }
-    const result = await backupService.createBackup({
-      compress: true,
-      encrypt: true,
-    });
-    res.json({
-      success: true,
-      backupId: result.metadata.id,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-
-initializeDBDock()
-  .then(() => {
-    setupScheduledBackups();
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} with scheduled backups`);
-    });
-  })
-  .catch((error) => {
-    console.error('Failed to initialize DBDock:', error);
-    process.exit(1);
-  });
+startScheduler().catch(console.error);
 ```
 
-**How It Works:**
-
-1. `ScheduleManager` reads schedules from `dbdock.config.json` (same file used by CLI)
-2. Your Express app sets up cron jobs based on those schedules
-3. When schedules change (via CLI or code), restart your app to pick up changes
-4. All schedule management writes directly to `dbdock.config.json`
-
-**Important:** Schedules only execute when your Node.js application is running. The CLI `dbdock schedule` command only manages the configuration - your application code runs the actual backups.
+**Note:** The CLI `dbdock schedule` command manages configuration for external schedulers but does not run a daemon itself. Using `node-cron` as shown above is the recommended way to run scheduled backups programmatically.
 
 ## Requirements
 
