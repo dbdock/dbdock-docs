@@ -165,7 +165,7 @@ Automatic cleanup to prevent storage bloat from frequent backups.
 
 ## Alerts
 
-Configure email notifications for backup events.
+Configure email and Slack notifications for backup events. Alerts work with both **programmatic usage** and **CLI commands**.
 
 ```json
 "alerts": {
@@ -181,10 +181,109 @@ Configure email notifications for backup events.
       }
     },
     "from": "backups@yourapp.com",
-    "to": ["admin@yourapp.com"]
+    "to": ["admin@yourapp.com", "devops@yourapp.com"]
+  },
+  "slack": {
+    "enabled": true,
+    "webhookUrl": "https://hooks.slack.com/services/..."
   }
 }
 ```
+
+### Slack Configuration
+
+1. Create a Slack App or use an existing one.
+2. Enable "Incoming Webhooks".
+3. Create a new Webhook URL for your channel.
+4. Run `npx dbdock init` and paste the URL when prompted.
+
+### SMTP Provider Examples
+
+**Gmail:**
+```json
+{
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "your-email@gmail.com",
+      "pass": "your-app-password"
+    }
+  }
+}
+```
+
+> **Note:** For Gmail, you need to [create an App Password](https://support.google.com/accounts/answer/185833) instead of using your regular password.
+
+**SendGrid:**
+```json
+{
+  "smtp": {
+    "host": "smtp.sendgrid.net",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "apikey",
+      "pass": "YOUR_SENDGRID_API_KEY"
+    }
+  }
+}
+```
+
+**AWS SES:**
+```json
+{
+  "smtp": {
+    "host": "email-smtp.us-east-1.amazonaws.com",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "YOUR_SMTP_USERNAME",
+      "pass": "YOUR_SMTP_PASSWORD"
+    }
+  }
+}
+```
+
+**Mailgun:**
+```json
+{
+  "smtp": {
+    "host": "smtp.mailgun.org",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "postmaster@your-domain.mailgun.org",
+      "pass": "YOUR_MAILGUN_SMTP_PASSWORD"
+    }
+  }
+}
+```
+
+### Alert Content
+
+Success alerts include:
+- Backup ID
+- Database name
+- Size (original and compressed)
+- Duration
+- Storage location
+- Encryption status
+
+Failure alerts include:
+- Error message
+- Database details
+- Timestamp
+- Helpful troubleshooting tips
+
+**Important Notes:**
+- ✅ Alerts work with programmatic usage (`createBackup()`)
+- ✅ Alerts work with scheduled backups (cron jobs in your app)
+- ✅ Alerts work with CLI commands (`npx dbdock backup`)
+- Configuration is read from `dbdock.config.json` automatically
+- Multiple recipients supported in the `to` array for email
+- Alerts are sent asynchronously (won't block backup completion)
 
 ## Storage Permissions
 

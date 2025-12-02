@@ -35,13 +35,13 @@ async function createBackup() {
   const backupService = dbdock.get(BackupService);
 
   const result = await backupService.createBackup({
-    format: 'plain',
+    format: 'plain', // 'custom' (binary), 'plain' (sql), 'directory', 'tar'
     compress: true,
     encrypt: true,
   });
 
   console.log(`Backup created: ${result.metadata.id}`);
-  console.log(`Size: ${result.metadata.formattedSize}`);
+  console.log(`Size: ${result.metadata.formattedSize}`); // e.g. "108.3 KB"
   console.log(`Path: ${result.storageKey}`);
   
   return result;
@@ -139,17 +139,21 @@ import { createDBDock, BackupService } from 'dbdock';
 import * as cron from 'node-cron';
 
 async function startScheduler() {
+  // Initialize DBDock
   const dbdock = await createDBDock();
   const backupService = dbdock.get(BackupService);
 
   console.log('🚀 Backup scheduler started. Running every minute...');
 
+  // Schedule task to run every minute ('* * * * *')
+  // For every 5 minutes use: '*/5 * * * *'
+  // For every hour use: '0 * * * *'
   cron.schedule('* * * * *', async () => {
     try {
       console.log('\n⏳ Starting scheduled backup...');
       
       const result = await backupService.createBackup({
-        format: 'plain',
+        format: 'plain', // Use 'plain' for SQL text, 'custom' for binary
         compress: true,
         encrypt: true,
       });
@@ -169,3 +173,91 @@ startScheduler().catch(console.error);
 <Note>
 The CLI `dbdock schedule` command manages configuration for external schedulers but does not run a daemon itself. Using `node-cron` as shown above is the recommended way to run scheduled backups programmatically.
 </Note>
+
+## Alerts
+
+DBDock can send notifications when backups complete (success or failure) via Email and Slack. Alerts work with both **programmatic usage** and **CLI commands**.
+
+### Configuration
+
+Configure alerts in `dbdock.config.json`:
+
+```json
+{
+  "database": { ... },
+  "storage": { ... },
+  "backup": { ... },
+  "alerts": {
+    "email": {
+      "enabled": true,
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "secure": false,
+        "auth": {
+          "user": "your-email@gmail.com",
+          "pass": "your-app-password"
+        }
+      },
+      "from": "backups@yourapp.com",
+      "to": ["admin@yourapp.com", "devops@yourapp.com"]
+    },
+    "slack": {
+      "enabled": true,
+      "webhookUrl": "https://hooks.slack.com/services/..."
+    }
+  }
+}
+```
+
+### Using Alerts Programmatically
+
+Once configured in `dbdock.config.json`, alerts are sent automatically when you create backups programmatically:
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+async function createBackupWithAlerts() {
+  const dbdock = await createDBDock();
+  const backupService = dbdock.get(BackupService);
+
+  // Alerts will be sent automatically after backup completes
+  const result = await backupService.createBackup({
+    compress: true,
+    encrypt: true,
+  });
+
+  console.log(`Backup created: ${result.metadata.id}`);
+  // Alerts sent to configured channels
+}
+
+createBackupWithAlerts().catch(console.error);
+```
+
+### Alert Content
+
+Success alerts include:
+- Backup ID
+- Database name
+- Size (original and compressed)
+- Duration
+- Storage location
+- Encryption status
+
+Failure alerts include:
+- Error message
+- Database details
+- Timestamp
+- Helpful troubleshooting tips
+
+### Testing Alert Configuration
+
+Run `npx dbdock test` to validate your configuration without creating a backup.
+
+**Important Notes:**
+- ✅ Alerts work with programmatic usage (`createBackup()`)
+- ✅ Alerts work with scheduled backups (cron jobs in your app)
+- ✅ Alerts work with CLI commands (`npx dbdock backup`)
+- Configuration is read from `dbdock.config.json` automatically
+- Multiple recipients supported in the `to` array for email
+- Alerts are sent asynchronously (won't block backup completion)

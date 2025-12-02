@@ -24,7 +24,7 @@ npx dbdock restore   # Restore backup
 - **Security** - AES-256 encryption, Brotli compression
 - **Retention Policies** - Automatic cleanup by count/age with safety nets
 - **Smart UX** - Intelligent filtering for 100+ backups, clear error messages
-- **Email Alerts** - SMTP notifications with custom templates
+- **Alerts** - Email (SMTP) and Slack notifications for backups (CLI & Programmatic)
 - **TypeScript Native** - Full type safety for programmatic usage
 - **Automation** - Cron schedules, auto-cleanup after backups
 
@@ -57,7 +57,7 @@ Interactive setup wizard that creates `dbdock.config.json` with:
 - Database connection (host, port, credentials)
 - Storage provider (Local, S3, R2, Cloudinary)
 - Encryption/compression settings
-- Email alerts (optional)
+- Email and Slack alerts (optional)
 
 Auto-adds config to `.gitignore` to protect credentials.
 

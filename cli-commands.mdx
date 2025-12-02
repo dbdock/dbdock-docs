@@ -15,7 +15,7 @@ This interactive wizard creates the `dbdock.config.json` file. It asks for:
 - Database connection details
 - Storage provider configuration
 - Encryption and compression preferences
-- Email alert settings
+- Email and Slack alerts (optional)
 
 ## `backup`
 
@@ -40,6 +40,25 @@ npx dbdock backup [options]
 npx dbdock backup --encrypt --compress --compression-level 9
 ```
 
+### Backup Formats
+
+DBDock supports multiple PostgreSQL backup formats:
+
+- `custom` (default) - PostgreSQL custom binary format (.sql)
+- `plain` - Plain SQL text format (.sql)
+- `directory` - Directory format (.dir)
+- `tar` - Tar archive format (.tar)
+
+### Generate Encryption Key
+
+Generate a secure 64-character hexadecimal encryption key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+The key must be exactly 64 hexadecimal characters (0-9, a-f, A-F).
+
 ## `restore`
 
 Restore a database from a backup.
@@ -49,6 +68,23 @@ npx dbdock restore
 ```
 
 This command launches an interactive interface to select a backup. It supports smart filtering for large numbers of backups.
+
+**Smart filtering** (auto-enabled for 20+ backups):
+
+- Show recent (last 10)
+- Date range (24h, 7d, 30d, 90d, custom)
+- Search by keyword/ID
+
+**Migration Support:**
+
+You can choose to restore to a **New Database Instance** during the restore process. This is perfect for migrating data between servers (e.g., from staging to production or local to cloud).
+
+1. Run `npx dbdock restore`
+2. Select a backup
+3. Choose "New Database Instance (Migrate)"
+4. Enter connection details for the target database
+
+Shows database stats and requires confirmation before restore.
 
 ## `list`
 
@@ -72,6 +108,8 @@ npx dbdock list [options]
 npx dbdock list --recent 10
 npx dbdock list --search "pre-deploy"
 ```
+
+**Auto-filtering** for 50+ backups with interactive prompts.
 
 ## `delete`
 
