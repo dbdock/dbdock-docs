@@ -34,7 +34,7 @@ Before you begin, ensure you have the following installed:
 
 ### Initialize DBdocks
 
-Run the interactive setup wizard to create your configuration file.
+Run the interactive setup wizard to create your secure configuration.
 
 ```bash
 npx dbdock init
@@ -46,7 +46,20 @@ This command will guide you through:
 3.  **Encryption/Compression**: Security settings.
 4.  **Email and Slack alerts**: Optional notification settings.
 
-It will automatically create a `dbdock.config.json` file and add it to your `.gitignore`.
+**Security-first approach:**
+- Saves non-sensitive config to `dbdock.config.json` (safe for git)
+- Saves secrets to `.env` (automatically gitignored)
+- Auto-updates `.gitignore` to exclude sensitive files
+
+### Migrate Legacy Configurations
+
+If you have an existing configuration with secrets embedded in `dbdock.config.json`, migrate to the secure approach:
+
+```bash
+npx dbdock migrate-config
+```
+
+This extracts secrets from your config file, creates `.env`, and updates your config to use environment variables.
 
 ### Create a Backup
 
@@ -83,3 +96,14 @@ Progress:
 ────────────────────────────────────────────────────────
 ✔ All steps completed in 8.42s
 ```
+
+### Migrate to a New Database
+
+You can also restore to a **New Database Instance** during the restore process. This is perfect for migrating data between servers:
+
+1. Run `npx dbdock restore`
+2. Select a backup
+3. Choose "New Database Instance (Migrate)"
+4. Enter connection details for the target database
+
+DBDock will show database stats and require confirmation before restoring.

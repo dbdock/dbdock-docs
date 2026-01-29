@@ -5,6 +5,32 @@ description: 'Common issues and solutions for DBDock'
 
 Run `npx dbdock test` to verify your configuration and diagnose issues.
 
+## Configuration Issues
+
+### Secrets in Config File
+
+If you have secrets (passwords, keys) stored directly in `dbdock.config.json`, migrate them to environment variables:
+
+```bash
+npx dbdock migrate-config
+```
+
+This command will:
+1. Extract all secrets from your config file
+2. Create/update `.env` with the secrets
+3. Remove secrets from `dbdock.config.json`
+4. Update `.gitignore` automatically
+
+### Missing Environment Variables
+
+DBDock requires certain environment variables to be set. Ensure you have:
+
+- `DBDOCK_DB_PASSWORD` - Database password
+- `DBDOCK_STORAGE_ACCESS_KEY` and `DBDOCK_STORAGE_SECRET_KEY` - For cloud storage
+- `DBDOCK_ENCRYPTION_SECRET` - If encryption is enabled
+
+Check your `.env` file exists and contains the required variables.
+
 ## Common Issues
 
 ### pg_dump not found
@@ -33,13 +59,20 @@ If you see an error that `pg_dump` command is not found, you need to install Pos
 
 If you're experiencing database connection issues:
 
-1. **Verify credentials** - Check `host`, `port`, `username`, `password`, and `database` in your config
-2. **Test connection manually**:
+1. **Verify credentials** - Check `host`, `port`, `username`, and `database` in your config
+2. **Check password** - Ensure `DBDOCK_DB_PASSWORD` is set in your `.env` file
+3. **Test connection manually**:
    ```bash
    psql -h HOST -p PORT -U USERNAME -d DATABASE
    ```
-3. **Check PostgreSQL server** - Ensure the server is running
-4. **Network/Firewall** - Verify network connectivity and firewall rules allow the connection
+4. **Check PostgreSQL server** - Ensure the server is running
+5. **Network/Firewall** - Verify network connectivity and firewall rules allow the connection
+6. **Use .pgpass** - For enhanced security, consider using `.pgpass` instead of environment variables:
+   ```bash
+   touch ~/.pgpass
+   chmod 600 ~/.pgpass
+   echo "host:port:database:username:password" >> ~/.pgpass
+   ```
 
 ## Storage Errors
 
@@ -47,7 +80,7 @@ If you're experiencing database connection issues:
 
 <Steps>
   <Step title="Verify credentials">
-    Ensure your AWS access key ID and secret access key are correct
+    Ensure `DBDOCK_STORAGE_ACCESS_KEY` and `DBDOCK_STORAGE_SECRET_KEY` are set in your `.env` file and are correct
   </Step>
   
   <Step title="Check IAM permissions">
@@ -59,7 +92,7 @@ If you're experiencing database connection issues:
   </Step>
   
   <Step title="Verify bucket configuration">
-    - Check bucket name is correct
+    - Check bucket name is correct in `dbdock.config.json`
     - Verify region matches your bucket's region
     - Ensure bucket exists and is accessible
   </Step>
@@ -71,7 +104,7 @@ If you're experiencing database connection issues:
 Common R2 issues and solutions
 </Warning>
 
-- **Verify API token** - Ensure your R2 API token is correct and has not expired
+- **Verify credentials** - Ensure `DBDOCK_STORAGE_ACCESS_KEY` and `DBDOCK_STORAGE_SECRET_KEY` are set in your `.env` file
 - **Check endpoint URL** - Must be in format: `https://ACCOUNT_ID.r2.cloudflarestorage.com`
 - **Bucket access** - Ensure bucket exists and is accessible
 - **Permissions** - Verify R2 credentials have read/write permissions
@@ -79,7 +112,8 @@ Common R2 issues and solutions
 
 ### Cloudinary
 
-- **Verify credentials** - Check cloud name, API key, and API secret are correct
+- **Verify credentials** - Ensure `DBDOCK_CLOUDINARY_API_KEY` and `DBDOCK_CLOUDINARY_API_SECRET` are set in your `.env` file
+- **Check cloud name** - Verify cloud name is correct in `dbdock.config.json`
 - **Account status** - Ensure your Cloudinary account is active
 - **API access** - Verify API credentials have media library access permissions
 
@@ -90,6 +124,13 @@ Encryption keys must be exactly 64 hexadecimal characters (0-9, a-f, A-F).
 **Generate a valid key:**
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**Set the key:**
+Store the generated key in your `.env` file as `DBDOCK_ENCRYPTION_SECRET`:
+
+```bash
+DBDOCK_ENCRYPTION_SECRET=your-64-character-hex-key
 ```
 
 <Note>

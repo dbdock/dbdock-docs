@@ -11,11 +11,26 @@ Initialize DBdocks in your project.
 npx dbdock init
 ```
 
-This interactive wizard creates the `dbdock.config.json` file. It asks for:
+This interactive wizard creates secure configuration:
 - Database connection details
 - Storage provider configuration
 - Encryption and compression preferences
 - Email and Slack alerts (optional)
+
+**Security-first approach:**
+- Saves non-sensitive config to `dbdock.config.json` (safe for git)
+- Saves secrets to `.env` (automatically gitignored)
+- Auto-updates `.gitignore` to exclude sensitive files
+
+## `migrate-config`
+
+Migrate existing configurations with embedded secrets.
+
+```bash
+npx dbdock migrate-config
+```
+
+This command extracts secrets from `dbdock.config.json`, creates `.env`, and updates your config to use environment variables. Perfect for upgrading from older versions that stored secrets in the config file.
 
 ## `backup`
 
