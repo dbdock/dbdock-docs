@@ -1,6 +1,6 @@
 # DBDock
 
-Enterprise-grade PostgreSQL backup and restore. Beautiful CLI with real-time progress tracking.
+Stop writing backup scripts. Stop losing sleep over database migrations. DBDock handles PostgreSQL backups, restores, database copies, and cross-database migrations between MongoDB and PostgreSQL in one command.
 
 [![npm version](https://img.shields.io/npm/v/dbdock.svg)](https://www.npmjs.com/package/dbdock)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -8,6 +8,22 @@ Enterprise-grade PostgreSQL backup and restore. Beautiful CLI with real-time pro
 [![Documentation](https://img.shields.io/badge/docs-dbdock.mintlify.app-blue)](https://dbdock.mintlify.app)
 
 📚 **[Full Documentation](https://dbdock.mintlify.app)** | 💬 **[Discussions](https://github.com/naheemolaide/dbdock-support/discussions)** | 🐛 **[Issues](https://github.com/naheemolaide/dbdock-support/issues)**
+
+## The Problem
+
+Every time you need to backup a database, copy it to staging, or restore before a migration — it's the same boring steps. Connect, dump, upload, move files around, remember the right flags. It's not hard. It's just repetitive. And repetitive stuff should be one command.
+
+## The Fix
+
+```bash
+npx dbdock init                              # One-time setup (takes 30 seconds)
+npx dbdock backup                            # Backup with encryption + compression
+npx dbdock restore                            # Restore from any backup
+npx dbdock copydb "db_url_1" "db_url_2"      # Copy entire database, zero config
+npx dbdock migrate "mongo_url" "postgres_url" # Cross-database migration
+```
+
+That's it. No shell scripts. No manual uploads. No throwaway migration code.
 
 ## Quick Start
 
@@ -21,13 +37,14 @@ npx dbdock restore   # Restore backup
 
 - **Beautiful CLI** - Real-time progress bars, speed tracking, smart filtering
 - **Multiple Storage** - Local, AWS S3, Cloudflare R2, Cloudinary
-- **Security First** - Hybrid config (env vars for secrets), AES-256 encryption, credential masking, .pgpass support
+- **Security First** - Hybrid config (env vars for secrets, or full URL via `DBDOCK_DB_URL`), AES-256 encryption, credential masking, .pgpass support
 - **Retention Policies** - Automatic cleanup by count/age with safety nets
 - **Smart UX** - Intelligent filtering for 100+ backups, clear error messages
 - **Alerts** - Email (SMTP) and Slack notifications for backups (CLI & Programmatic)
 - **TypeScript Native** - Full type safety for programmatic usage
 - **Automation** - Cron schedules, auto-cleanup after backups
 - **Migration Tool** - One command to migrate legacy configs to secure env vars
+- **Cross-Database** - MongoDB ↔ PostgreSQL migration with schema mapping and dry run
 
 ## Installation
 
@@ -51,36 +68,40 @@ npx dbdock status
 
 ## CLI Commands
 
-### `dbdock init`
+### `dbdock init` — Set up in 30 seconds
 
-Interactive setup wizard that creates secure configuration:
+Run once. It walks you through everything interactively:
 
-- Database connection (host, port, credentials)
-- Storage provider (Local, S3, R2, Cloudinary)
-- Encryption/compression settings
-- Email and Slack alerts (optional)
+```bash
+npx dbdock init
+```
 
-**Security-first approach:**
-- Saves non-sensitive config to `dbdock.config.json` (safe for git)
-- Saves secrets to `.env` (automatically gitignored)
-- Auto-updates `.gitignore` to exclude sensitive files
+It asks for your database connection, picks your storage (Local, S3, R2, Cloudinary), sets up encryption if you want it, and optionally configures Slack/Email alerts.
 
-### `dbdock migrate-config`
+**What happens under the hood:**
+- Config (safe stuff) goes to `dbdock.config.json` — commit this
+- Secrets go to `.env` — never committed, `.gitignore` updated automatically
 
-Migrate existing configurations with embedded secrets:
+You can also run **without a config file**: set `DBDOCK_DB_URL` (or `DATABASE_URL`) and other env vars and DBDock will use env-only configuration.
+
+### `dbdock migrate-config` — Fix legacy configs
 
 ```bash
 npx dbdock migrate-config
 ```
 
-Extracts secrets from `dbdock.config.json`, creates `.env`, and updates your config to use environment variables.
+Got secrets sitting in `dbdock.config.json` from an older version? This extracts them to `.env`, cleans up your config, and updates `.gitignore`. One command, done.
 
-### `npx dbdock backup`
+### `npx dbdock backup` — One command, full backup
 
-Creates database backup with real-time progress tracking:
+```bash
+npx dbdock backup
+```
+
+Real-time progress. Streams directly to your storage provider. Done.
 
 ```
-████████████████████ | 100% | 45.23/100 MB | Speed: 12.50 MB/s | ETA: 0s | Uploading to S3
+████████████████████ | 100% | 45.23 MB | Speed: 12.50 MB/s | Uploading to S3
 ✔ Backup completed successfully
 ```
 
@@ -108,9 +129,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - `directory` - Directory format (.dir)
 - `tar` - Tar archive format (.tar)
 
-### `npx dbdock restore`
-
-Interactive restore with smart filtering and multi-step progress:
+### `npx dbdock restore` — Interactive restore with smart filtering
 
 ```
 Progress:
@@ -123,11 +142,7 @@ Progress:
 ✔ All steps completed in 8.42s
 ```
 
-**Smart filtering** (auto-enabled for 20+ backups):
-
-- Show recent (last 10)
-- Date range (24h, 7d, 30d, 90d, custom)
-- Search by keyword/ID
+Got 200+ backups? It auto-enables smart filtering — search by date, keyword, or just grab the most recent ones. No scrolling through walls of text.
 
 **Migration Support:**
 
@@ -140,44 +155,59 @@ You can choose to restore to a **New Database Instance** during the restore proc
 
 Shows database stats and requires confirmation before restore.
 
-### `npx dbdock list`
+### `npx dbdock copydb` — Copy a database with just two URLs
 
-View backups with smart filtering:
+This is the one people love. No config files. No setup. Just paste two PostgreSQL URLs:
 
 ```bash
-npx dbdock list                  # All backups
+npx dbdock copydb "postgresql://user:pass@source:5432/mydb" "postgresql://user:pass@target:5432/mydb"
+```
+
+It tests both connections, shows you the source DB size and table count, warns you if the target has existing data, and asks for confirmation before doing anything. Then it streams `pg_dump` directly into `pg_restore` — no temp files, no waiting.
+
+**Options:** `--schema-only` (tables, indexes, constraints — no data), `--data-only`, `--verbose`
+
+**Environment consolidation:**
+
+```bash
+npx dbdock copydb "prod_url" "staging_url"
+npx dbdock copydb "staging_url" "prod_url"
+npx dbdock copydb "prod_url" "postgresql://postgres:pass@localhost:5432/myapp"
+npx dbdock copydb --schema-only "prod_url" "staging_url"
+```
+
+Perfect for moving between Neon, Supabase, Railway, RDS, or any Postgres host.
+
+### `npx dbdock list` — See all your backups
+
+```bash
+npx dbdock list                  # Everything
 npx dbdock list --recent 10      # Last 10
-npx dbdock list --search keyword # Search
+npx dbdock list --search keyword # Find specific backup
 npx dbdock list --days 7         # Last 7 days
 ```
 
-**Auto-filtering** for 50+ backups with interactive prompts.
+Auto-filters when you have 50+ backups so the output stays clean.
 
-### `npx dbdock delete`
-
-Delete backups interactively or by key:
+### `npx dbdock delete` — Remove backups
 
 ```bash
-npx dbdock delete              # Interactive
-npx dbdock delete --key <id>   # Specific backup
-npx dbdock delete --all        # All (with confirmation)
+npx dbdock delete              # Interactive picker
+npx dbdock delete --key <id>   # Delete specific backup
+npx dbdock delete --all        # Nuke everything (with confirmation)
 ```
 
-### `npx dbdock cleanup`
-
-Clean up old backups based on retention policy:
+### `npx dbdock cleanup` — Auto-clean old backups
 
 ```bash
 npx dbdock cleanup              # Interactive with preview
-npx dbdock cleanup --dry-run    # Preview only
+npx dbdock cleanup --dry-run    # See what would be deleted
 npx dbdock cleanup --force      # Skip confirmation
 ```
 
-Shows detailed preview of what will be deleted and space to reclaim.
+Shows you exactly what gets deleted and how much space you reclaim before doing anything.
 
-### `dbdock status`
-
-Quick view of all schedules and service status:
+### `dbdock status` — Check schedules and service health
 
 ```bash
 dbdock status
@@ -205,35 +235,34 @@ Total: 2 schedule(s) - 1 active, 1 paused
   Memory: 45.23 MB
 ```
 
-### `dbdock test`
-
-Validates database, storage, and email configuration.
-
-### `dbdock schedule`
-
-Manage backup schedules in configuration:
+### `dbdock schedule` — Manage cron schedules
 
 ```bash
 dbdock schedule
 ```
 
-**Features:**
+Add, remove, or toggle backup schedules. Comes with presets (hourly, daily at midnight, daily at 2 AM, weekly, monthly) or use a custom cron expression.
 
-- View current schedules with status
-- Add new schedule with cron expression presets
-- Remove or toggle (enable/disable) schedules
-- Saves to `dbdock.config.json`
+**Heads up:** Schedules only run when DBDock is integrated into your Node.js app (see Programmatic Usage below). The CLI just manages the config.
 
-**Schedule Presets:**
+### `dbdock test` — Verify everything works
 
-- Every hour: `0 * * * *`
-- Every day at midnight: `0 0 * * *`
-- Every day at 2 AM: `0 2 * * *`
-- Every week (Sunday): `0 0 * * 0`
-- Every month (1st): `0 0 1 * *`
-- Custom cron expression
+```bash
+npx dbdock test
+```
 
-**⚠️ Important:** Schedules only execute when DBDock is integrated into your Node.js application (see Programmatic Usage below). The CLI is for configuration only.
+Tests your database connection, storage provider, and alert config. Run this first if something feels off.
+
+### Cross-Database Migration (MongoDB ↔ PostgreSQL)
+
+Move data between MongoDB and PostgreSQL without throwaway scripts. DBDock analyzes the source, proposes a schema mapping, lets you review it, and handles the transfer.
+
+```bash
+npx dbdock analyze "mongodb://localhost:27017/myapp"
+npx dbdock migrate "mongodb://localhost:27017/myapp" "postgresql://user:pass@localhost:5432/myapp"
+```
+
+Supports dry run (`--dry-run`), incremental sync (`--incremental --since <date>`), and export/import config (`--export-config`, `--config`). Failed rows go to `_migration_errors`; nothing executes without your confirmation. See the package README or CLI for full options.
 
 ## Security Best Practices
 
@@ -241,8 +270,8 @@ dbdock schedule
 
 DBDock uses a **hybrid configuration approach** to keep your secrets safe:
 
-- **Non-sensitive settings** → `dbdock.config.json` (safe for version control)
-- **Sensitive secrets** → Environment variables (NEVER commit to git)
+- **Non-sensitive settings** → `dbdock.config.json` (safe for version control), or env vars
+- **Sensitive secrets** → Environment variables (e.g. `DBDOCK_DB_URL`, `DBDOCK_DB_PASSWORD`, storage keys — NEVER commit to git)
 
 When you run `npx dbdock init`, DBDock automatically:
 - Saves credentials to `.env` (not committed)
@@ -253,11 +282,12 @@ When you run `npx dbdock init`, DBDock automatically:
 
 ### Environment Variables
 
-Set these environment variables for secure credential management:
+Set these environment variables for secure credential management. You can use a **full database URL** for env-only config (no `dbdock.config.json` needed):
 
 ```bash
-# Database password (Required)
-DBDOCK_DB_PASSWORD=your-database-password
+# Database: full URL (recommended for env-only) or separate password
+DBDOCK_DB_URL=postgresql://user:password@host:5432/database
+# or DATABASE_URL=... or DBDOCK_DB_PASSWORD=your-database-password
 
 # Storage credentials (Required for cloud storage)
 DBDOCK_STORAGE_ACCESS_KEY=your-access-key
@@ -436,7 +466,7 @@ All cloud backups stored in `dbdock_backups/` folder with format: `backup-YYYY-M
 
 ### Retention Policy
 
-Automatic cleanup to prevent storage bloat from frequent backups:
+Backups pile up fast. Retention handles it automatically:
 
 ```json
 {
@@ -469,7 +499,7 @@ Automatic cleanup to prevent storage bloat from frequent backups:
 
 ## Programmatic Usage
 
-Use DBDock in your Node.js application to create backups programmatically. You don't need to understand NestJS internals - DBDock provides a simple API that works with any Node.js backend.
+Don't just use the CLI — drop DBDock into your Node.js app and trigger backups from code. Works with any backend (Express, Fastify, NestJS, whatever). You don't need to understand NestJS internals; DBDock provides a simple API.
 
 ### Basic Setup
 
@@ -479,17 +509,17 @@ First, install DBDock:
 npm install dbdock
 ```
 
-Make sure you have `dbdock.config.json` configured (run `npx dbdock init` first). DBDock reads all configuration from this file automatically.
+Use `dbdock.config.json` (run `npx dbdock init`) or configure entirely via env vars (`DBDOCK_DB_URL` or `DATABASE_URL` plus storage and other env vars). DBDock reads from config file and/or environment automatically.
 
 ### How It Works
 
 DBDock uses a simple initialization pattern:
 
-1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json`)
+1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json` and/or env vars)
 2. Get the `BackupService` from the returned context using `.get(BackupService)`
 3. Use the service methods to create backups, list backups, etc.
 
-Think of `createDBDock()` as a factory function that sets up everything for you based on your config file.
+Think of `createDBDock()` as a factory function that sets up everything from your config and env vars.
 
 ### Creating Backups
 
@@ -583,11 +613,11 @@ async function getBackupInfo(backupId) {
 getBackupInfo('your-backup-id').catch(console.error);
 ```
 
-**Note:** Restore functionality is currently only available via CLI (`npx dbdock restore`). Programmatic restore will be available in a future release.
+Restore is CLI-only for now (`npx dbdock restore`). Programmatic restore is coming.
 
-### Scheduling Backups
+### Schedule Backups with node-cron
 
-DBDock doesn't include a built-in scheduler (to keep the package lightweight), but it's easy to schedule backups using `node-cron`.
+DBDock stays lightweight — no built-in daemon. Use `node-cron` to schedule:
 
 First, install `node-cron`:
 
@@ -653,7 +683,13 @@ sudo apt-get install postgresql-client
 
 ## Troubleshooting
 
-Run `npx dbdock test` to verify your configuration.
+**First step, always:**
+
+```bash
+npx dbdock test
+```
+
+This tests your database, storage, and alert config in one go.
 
 ### Common Issues
 
@@ -667,57 +703,33 @@ brew install postgresql
 sudo apt-get install postgresql-client
 ```
 
-**Database connection errors:**
+**Can't connect to database:**
 
-- Verify `host`, `port`, `username`, `password`, `database` in config
-- Test connection: `psql -h HOST -p PORT -U USERNAME -d DATABASE`
-- Check PostgreSQL server is running
-- Verify network/firewall allows connection
+- Double-check `host`, `port`, `username`, `password`, `database` in config (or use `DBDOCK_DB_URL` / `DATABASE_URL`)
+- Test manually: `psql -h HOST -p PORT -U USERNAME -d DATABASE`
+- Make sure the PostgreSQL server is actually running
+- Check firewalls / security groups if it's a remote database
 
 **Storage errors:**
 
-_AWS S3:_
+**S3:** Check credentials, bucket name, region. IAM user needs `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, `s3:DeleteObject`.
 
-- Verify credentials are correct
-- Ensure IAM user has permissions: `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, `s3:DeleteObject`
-- Check bucket name and region
+**R2:** Check endpoint format (`https://ACCOUNT_ID.r2.cloudflarestorage.com`), verify API token and bucket exist.
 
-_Cloudflare R2:_
+**Cloudinary:** Verify cloud name, API key, API secret. Make sure the account is active.
 
-- Verify API token is correct
-- Check endpoint URL format: `https://ACCOUNT_ID.r2.cloudflarestorage.com`
-- Ensure bucket exists and is accessible
-- Verify R2 credentials have read/write permissions
-
-_Cloudinary:_
-
-- Verify cloud name, API key, and secret are correct
-- Check your Cloudinary account is active
-- Ensure API credentials have media library access
-
-**Encryption key errors:**
+**Encryption key issues:** Key must be exactly 64 hex characters. Generate a valid one:
 
 ```bash
-# Generate a valid 64-character hex key
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-# Must be exactly 64 hexadecimal characters (0-9, a-f, A-F)
 ```
 
-**R2 restore not working:**
+**No backups found during restore:**
 
-- Ensure backups are in `dbdock_backups/` folder
-- Verify backup files are named with `.sql` extension
-- Check endpoint configuration matches R2 account ID
-
-**No backups found:**
-
-- Local: Check files exist in configured path
-- S3/R2: Verify files are in `dbdock_backups/` folder
-- Cloudinary: Check Media Library for `dbdock_backups` folder
-- Ensure files match pattern: `backup-*.sql`
-
-DBDock shows clear, actionable error messages for all issues with specific troubleshooting steps.
+- **Local:** Check the configured path has files
+- **S3/R2:** Files should be in `dbdock_backups/` folder
+- **Cloudinary:** Check Media Library for `dbdock_backups` folder
+- Files should match: `backup-*.sql`
 
 ## Documentation
 

@@ -5,7 +5,7 @@ description: 'Start backing up your database in under 5 minutes'
 
 ## Setup your development
 
-Learn how to set up DBdocks locally and start managing your backups.
+Learn how to set up DBDock locally and start managing your backups.
 
 ### Prerequisites
 
@@ -32,59 +32,45 @@ Before you begin, ensure you have the following installed:
   </Accordion>
 </AccordionGroup>
 
-### Initialize DBdocks
+### Initialize DBDock (30 seconds)
 
-Run the interactive setup wizard to create your secure configuration.
+Run once. The interactive setup walks you through database connection, storage (Local, S3, R2, Cloudinary), encryption, and optional Slack/Email alerts.
 
 ```bash
 npx dbdock init
 ```
-
-This command will guide you through:
-1.  **Database connection**: Host, port, credentials.
-2.  **Storage provider**: Local, S3, R2, or Cloudinary.
-3.  **Encryption/Compression**: Security settings.
-4.  **Email and Slack alerts**: Optional notification settings.
 
 **Security-first approach:**
 - Saves non-sensitive config to `dbdock.config.json` (safe for git)
 - Saves secrets to `.env` (automatically gitignored)
 - Auto-updates `.gitignore` to exclude sensitive files
 
-### Migrate Legacy Configurations
+You can also run **without a config file**: set `DBDOCK_DB_URL` (or `DATABASE_URL`) and storage/encryption env vars in `.env` and use DBDock with env-only configuration.
 
-If you have an existing configuration with secrets embedded in `dbdock.config.json`, migrate to the secure approach:
+### Migrate legacy configs
 
-```bash
-npx dbdock migrate-config
-```
+Got secrets in `dbdock.config.json`? Run `npx dbdock migrate-config` — it extracts them to `.env`, cleans up your config, and updates `.gitignore`. One command, done.
 
-This extracts secrets from your config file, creates `.env`, and updates your config to use environment variables.
+### Create a backup
 
-### Create a Backup
-
-Once initialized, you can create your first backup immediately.
+Once initialized, create your first backup. Real-time progress; streams directly to your storage. Done.
 
 ```bash
 npx dbdock backup
 ```
-
-You will see a real-time progress bar as your database is backed up, compressed, encrypted, and uploaded to your chosen storage.
 
 ```
 ████████████████████ | 100% | 45.23/100 MB | Speed: 12.50 MB/s | ETA: 0s | Uploading to S3
 ✔ Backup completed successfully
 ```
 
-### Restore a Backup
+### Restore a backup
 
-Restoring is just as easy. Run the restore command to see a list of available backups.
+Run the restore command, pick a backup (smart filtering if you have lots), and DBDock handles download, decryption, decompression, and restore.
 
 ```bash
 npx dbdock restore
 ```
-
-Select the backup you want to restore, and DBdocks will handle the download, decryption, decompression, and restoration process.
 
 ```
 Progress:

@@ -1,40 +1,35 @@
 ---
 title: 'CLI Commands'
-description: 'Comprehensive guide to DBdocks CLI commands'
+description: 'Comprehensive guide to DBDock CLI commands'
 ---
 
-## `init`
+## `init` — Set up in 30 seconds
 
-Initialize DBdocks in your project.
+Run once. It walks you through everything interactively.
 
 ```bash
 npx dbdock init
 ```
 
-This interactive wizard creates secure configuration:
-- Database connection details
-- Storage provider configuration
-- Encryption and compression preferences
-- Email and Slack alerts (optional)
+It asks for your database connection, picks your storage (Local, S3, R2, Cloudinary), sets up encryption if you want it, and optionally configures Slack/Email alerts.
 
-**Security-first approach:**
-- Saves non-sensitive config to `dbdock.config.json` (safe for git)
-- Saves secrets to `.env` (automatically gitignored)
-- Auto-updates `.gitignore` to exclude sensitive files
+**What happens under the hood:**
+- Config (safe stuff) goes to `dbdock.config.json` — commit this
+- Secrets go to `.env` — never committed, `.gitignore` updated automatically
 
-## `migrate-config`
+You can also run **without a config file**: set `DBDOCK_DB_URL` (or `DATABASE_URL`) and other env vars and DBDock will use env-only configuration.
 
-Migrate existing configurations with embedded secrets.
+## `migrate-config` — Fix legacy configs
 
 ```bash
 npx dbdock migrate-config
 ```
 
-This command extracts secrets from `dbdock.config.json`, creates `.env`, and updates your config to use environment variables. Perfect for upgrading from older versions that stored secrets in the config file.
+Got secrets sitting in `dbdock.config.json` from an older version? This extracts them to `.env`, cleans up your config, and updates `.gitignore`. One command, done.
 
-## `backup`
+## `backup` — One command, full backup
 
-Create a new database backup.
+Real-time progress. Streams directly to your storage provider. Done.
 
 ```bash
 npx dbdock backup [options]
@@ -74,17 +69,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 The key must be exactly 64 hexadecimal characters (0-9, a-f, A-F).
 
-## `restore`
-
-Restore a database from a backup.
+## `restore` — Interactive restore with smart filtering
 
 ```bash
 npx dbdock restore
 ```
 
-This command launches an interactive interface to select a backup. It supports smart filtering for large numbers of backups.
+Got 200+ backups? It auto-enables smart filtering — search by date, keyword, or just grab the most recent ones. No scrolling through walls of text. You can also restore to a completely different database; pick "New Database Instance (Migrate)" when prompted and enter the target connection details.
 
-**Smart filtering** (auto-enabled for 20+ backups):
+**Smart filtering:**
 
 - Show recent (last 10)
 - Date range (24h, 7d, 30d, 90d, custom)
@@ -101,9 +94,7 @@ You can choose to restore to a **New Database Instance** during the restore proc
 
 Shows database stats and requires confirmation before restore.
 
-## `list`
-
-List available backups.
+## `list` — See all your backups
 
 ```bash
 npx dbdock list [options]
@@ -124,68 +115,83 @@ npx dbdock list --recent 10
 npx dbdock list --search "pre-deploy"
 ```
 
-**Auto-filtering** for 50+ backups with interactive prompts.
+Auto-filters when you have 50+ backups so the output stays clean.
 
-## `delete`
+## `copydb` — Copy a database with just two URLs
 
-Delete backups.
+No config files. No setup. Just paste two PostgreSQL URLs.
 
 ```bash
-npx dbdock delete [options]
+npx dbdock copydb "postgresql://user:pass@source:5432/mydb" "postgresql://user:pass@target:5432/mydb"
 ```
+
+It tests both connections, shows you the source DB size and table count, warns you if the target has existing data, and asks for confirmation before doing anything. Streams `pg_dump` directly into `pg_restore` — no temp files, no waiting.
 
 ### Options
 
 | Option | Description |
 | :--- | :--- |
-| `--key <id>` | Delete a specific backup by ID |
-| `--all` | Delete all backups (requires confirmation) |
+| `--schema-only` | Copy tables, indexes, constraints — no data |
+| `--data-only` | Copy data only (schema must exist on target) |
+| `--verbose` | Show detailed pg_dump/pg_restore output |
 
-## `cleanup`
-
-Manually trigger the retention policy cleanup.
+### Environment consolidation
 
 ```bash
-npx dbdock cleanup [options]
+npx dbdock copydb "prod_url" "staging_url"
+npx dbdock copydb "staging_url" "prod_url"
+npx dbdock copydb "prod_url" "postgresql://postgres:pass@localhost:5432/myapp"
+npx dbdock copydb --schema-only "prod_url" "staging_url"
 ```
 
-### Options
+Perfect for moving between Neon, Supabase, Railway, RDS, or any Postgres host.
 
-| Option | Description |
-| :--- | :--- |
-| `--dry-run` | Preview what would be deleted without taking action |
-| `--force` | Skip confirmation prompt |
+## `delete` — Remove backups
 
-## `schedule`
+```bash
+npx dbdock delete              # Interactive picker
+npx dbdock delete --key <id>   # Delete specific backup
+npx dbdock delete --all        # Nuke everything (with confirmation)
+```
 
-Manage automated backup schedules.
+## `cleanup` — Auto-clean old backups
+
+```bash
+npx dbdock cleanup              # Interactive with preview
+npx dbdock cleanup --dry-run    # See what would be deleted
+npx dbdock cleanup --force      # Skip confirmation
+```
+
+Shows you exactly what gets deleted and how much space you reclaim before doing anything.
+
+## `schedule` — Manage cron schedules
 
 ```bash
 dbdock schedule
 ```
 
-This interactive command allows you to:
-- View current schedules with status
-- Add new schedules (using cron expressions or presets)
-- Remove or toggle (enable/disable) schedules
-- Saves to `dbdock.config.json`
+Add, remove, or toggle backup schedules. Comes with presets (hourly, daily at midnight, daily at 2 AM, weekly, monthly) or use a custom cron expression. Saves to `dbdock.config.json`.
 
-### Schedule Presets
+**Heads up:** Schedules only run when DBDock is integrated into your Node.js app (see Programmatic Usage). The CLI just manages the config.
 
-- Every hour: `0 * * * *`
-- Every day at midnight: `0 0 * * *`
-- Every day at 2 AM: `0 2 * * *`
-- Every week (Sunday): `0 0 * * 0`
-- Every month (1st): `0 0 1 * *`
-- Custom cron expression
+## `analyze` — Understand your database first
 
-<Warning>
-**Important:** Schedules only execute when DBDock is integrated into your Node.js application (see Programmatic Usage). The CLI is for configuration only.
-</Warning>
+```bash
+npx dbdock analyze "mongodb://localhost:27017/myapp"
+npx dbdock analyze "postgresql://user:pass@localhost:5432/myapp"
+```
 
-## `status`
+Scans the source database and shows collections/tables, field types, nested structures, and inconsistencies. Use before running a cross-database migration.
 
-View all schedules and service status at a glance.
+## `migrate` — Cross-database migration (MongoDB ↔ PostgreSQL)
+
+```bash
+npx dbdock migrate "mongodb://localhost:27017/myapp" "postgresql://user:pass@localhost:5432/myapp"
+```
+
+DBDock analyzes the source, generates a schema mapping proposal, and presents it for review before touching anything. Supports `--dry-run`, `--incremental --since <date>`, `--config`, `--export-config`, `--batch-size`, `--max-depth`. Failed rows go to `_migration_errors`; nothing executes without your confirmation.
+
+## `status` — Check schedules and service health
 
 ```bash
 dbdock status
@@ -213,13 +219,11 @@ Total: 2 schedule(s) - 1 active, 1 paused
   Memory: 45.23 MB
 ```
 
-## `test`
-
-Validate your configuration.
+## `test` — Verify everything works
 
 ```bash
 npx dbdock test
 ```
 
-Checks database connection, storage access, and email configuration.
+Tests your database connection, storage provider, and alert config. Run this first if something feels off.
 

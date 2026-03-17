@@ -13,17 +13,17 @@ First, install DBDock:
 npm install dbdock
 ```
 
-Make sure you have `dbdock.config.json` configured (run `npx dbdock init` first). DBDock reads all configuration from this file automatically.
+Use `dbdock.config.json` (run `npx dbdock init`) or configure via env vars (`DBDOCK_DB_URL` or `DATABASE_URL` plus storage and other env vars). DBDock reads from config and/or environment automatically.
 
 ## How It Works
 
 DBDock uses a simple initialization pattern:
 
-1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json`)
+1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json` and/or environment variables)
 2. Get the `BackupService` from the returned context using `.get(BackupService)`
 3. Use the service methods to create backups, list backups, etc.
 
-Think of `createDBDock()` as a factory function that sets up everything for you based on your config file.
+Think of `createDBDock()` as a factory function that sets up everything from your config file and env vars.
 
 ## Creating Backups
 
@@ -258,6 +258,6 @@ Run `npx dbdock test` to validate your configuration without creating a backup.
 - ✅ Alerts work with programmatic usage (`createBackup()`)
 - ✅ Alerts work with scheduled backups (cron jobs in your app)
 - ✅ Alerts work with CLI commands (`npx dbdock backup`)
-- Configuration is read from `dbdock.config.json` automatically
+- Configuration is read from `dbdock.config.json` and/or environment variables (e.g. `DBDOCK_DB_URL`) automatically
 - Multiple recipients supported in the `to` array for email
 - Alerts are sent asynchronously (won't block backup completion)

@@ -1,6 +1,6 @@
 # DBDock
 
-Enterprise-grade PostgreSQL backup and restore. Beautiful CLI with real-time progress tracking.
+Stop writing backup scripts. Stop losing sleep over database migrations. DBDock handles PostgreSQL backups, restores, database copies, and cross-database migrations between MongoDB and PostgreSQL in one command.
 
 [![npm version](https://img.shields.io/npm/v/dbdock.svg)](https://www.npmjs.com/package/dbdock)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -12,21 +12,27 @@ Enterprise-grade PostgreSQL backup and restore. Beautiful CLI with real-time pro
 ## Quick Start
 
 ```bash
-npx dbdock init      # Interactive setup
-npx dbdock backup    # Create backup
-npx dbdock restore   # Restore backup
+npx dbdock init      # One-time setup (30 seconds)
+npx dbdock backup    # Backup with encryption + compression
+npx dbdock restore   # Restore from any backup
+npx dbdock copydb "db_url_1" "db_url_2"      # Copy database, zero config
+npx dbdock migrate "mongo_url" "postgres_url" # Cross-database migration
 ```
+
+That's it. No shell scripts. No manual uploads. No throwaway migration code.
 
 ## Features
 
 - **Beautiful CLI** - Real-time progress bars, speed tracking, smart filtering
 - **Multiple Storage** - Local, AWS S3, Cloudflare R2, Cloudinary
-- **Security** - AES-256 encryption, Brotli compression
+- **Security First** - Hybrid config (env vars or `DBDOCK_DB_URL`), AES-256 encryption, credential masking, .pgpass support
 - **Retention Policies** - Automatic cleanup by count/age with safety nets
 - **Smart UX** - Intelligent filtering for 100+ backups, clear error messages
 - **Alerts** - Email (SMTP) and Slack notifications for backups (CLI & Programmatic)
 - **TypeScript Native** - Full type safety for programmatic usage
 - **Automation** - Cron schedules, auto-cleanup after backups
+- **Migration Tool** - One command to migrate legacy configs to secure env vars
+- **Cross-Database** - MongoDB ↔ PostgreSQL migration with schema mapping and dry run
 
 ## Installation
 
@@ -50,16 +56,9 @@ npx dbdock status
 
 ## CLI Commands
 
-### `dbdock init`
+### `dbdock init` — Set up in 30 seconds
 
-Interactive setup wizard that creates `dbdock.config.json` with:
-
-- Database connection (host, port, credentials)
-- Storage provider (Local, S3, R2, Cloudinary)
-- Encryption/compression settings
-- Email and Slack alerts (optional)
-
-Auto-adds config to `.gitignore` to protect credentials.
+Run once. It walks you through database connection, storage (Local, S3, R2, Cloudinary), encryption, and optional Slack/Email alerts. Config goes to `dbdock.config.json`; secrets go to `.env` (never committed). You can also run **without a config file**: set `DBDOCK_DB_URL` (or `DATABASE_URL`) and other env vars for env-only configuration.
 
 ### `npx dbdock backup`
 
@@ -386,17 +385,17 @@ First, install DBDock:
 npm install dbdock
 ```
 
-Make sure you have `dbdock.config.json` configured (run `npx dbdock init` first). DBDock reads all configuration from this file automatically.
+Use `dbdock.config.json` (run `npx dbdock init`) or configure via env vars (`DBDOCK_DB_URL` or `DATABASE_URL` plus storage and other env vars). DBDock reads from config and/or environment automatically.
 
 ### How It Works
 
 DBDock uses a simple initialization pattern:
 
-1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json`)
+1. Call `createDBDock()` to initialize DBDock (reads from `dbdock.config.json` and/or environment variables)
 2. Get the `BackupService` from the returned context using `.get(BackupService)`
 3. Use the service methods to create backups, list backups, etc.
 
-Think of `createDBDock()` as a factory function that sets up everything for you based on your config file.
+Think of `createDBDock()` as a factory function that sets up everything from your config and env vars.
 
 ### Creating Backups
 
@@ -697,7 +696,7 @@ Run `npx dbdock test` to validate your configuration without creating a backup.
 - ✅ Alerts work with programmatic usage (`createBackup()`)
 - ✅ Alerts work with scheduled backups (cron jobs in your app)
 - ✅ Alerts work with CLI commands (`npx dbdock backup`)
-- Configuration is read from `dbdock.config.json` automatically
+- Configuration is read from `dbdock.config.json` and/or environment variables (e.g. `DBDOCK_DB_URL`) automatically
 - Multiple recipients supported in the `to` array for email
 - Alerts are sent asynchronously (won't block backup completion)
 

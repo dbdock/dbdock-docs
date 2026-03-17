@@ -3,7 +3,7 @@ title: 'Troubleshooting'
 description: 'Common issues and solutions for DBDock'
 ---
 
-Run `npx dbdock test` to verify your configuration and diagnose issues.
+**First step, always:** Run `npx dbdock test`. It tests your database, storage, and alert config in one go.
 
 ## Configuration Issues
 
@@ -23,9 +23,9 @@ This command will:
 
 ### Missing Environment Variables
 
-DBDock requires certain environment variables to be set. Ensure you have:
+DBDock requires certain environment variables to be set. Ensure you have one of:
 
-- `DBDOCK_DB_PASSWORD` - Database password
+- **Database:** Either `DBDOCK_DB_URL` or `DATABASE_URL` (full URL, e.g. `postgresql://user:pass@host:5432/db`), or `DBDOCK_DB_PASSWORD` with host/port/user/database in config or env (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME`)
 - `DBDOCK_STORAGE_ACCESS_KEY` and `DBDOCK_STORAGE_SECRET_KEY` - For cloud storage
 - `DBDOCK_ENCRYPTION_SECRET` - If encryption is enabled
 
@@ -33,9 +33,9 @@ Check your `.env` file exists and contains the required variables.
 
 ## Common Issues
 
-### pg_dump not found
+### pg_dump / pg_restore / psql not found
 
-If you see an error that `pg_dump` command is not found, you need to install PostgreSQL client tools.
+You need PostgreSQL client tools installed.
 
 <AccordionGroup>
   <Accordion title="macOS">
@@ -55,19 +55,18 @@ If you see an error that `pg_dump` command is not found, you need to install Pos
   </Accordion>
 </AccordionGroup>
 
-## Database Connection Errors
+## Database connection errors
 
-If you're experiencing database connection issues:
+**Can't connect to database?**
 
-1. **Verify credentials** - Check `host`, `port`, `username`, and `database` in your config
-2. **Check password** - Ensure `DBDOCK_DB_PASSWORD` is set in your `.env` file
-3. **Test connection manually**:
+1. Double-check `host`, `port`, `username`, `password`, `database` in config (or use `DBDOCK_DB_URL` / `DATABASE_URL`)
+2. Test manually:
    ```bash
    psql -h HOST -p PORT -U USERNAME -d DATABASE
    ```
-4. **Check PostgreSQL server** - Ensure the server is running
-5. **Network/Firewall** - Verify network connectivity and firewall rules allow the connection
-6. **Use .pgpass** - For enhanced security, consider using `.pgpass` instead of environment variables:
+3. Make sure the PostgreSQL server is actually running
+4. Check firewalls / security groups if it's a remote database
+5. **Use .pgpass** — For enhanced security, use `.pgpass` instead of env vars:
    ```bash
    touch ~/.pgpass
    chmod 600 ~/.pgpass
