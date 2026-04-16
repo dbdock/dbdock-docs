@@ -1,0 +1,62 @@
+---
+title: 'dbdock status'
+description: 'View configured schedules and service health.'
+---
+
+```bash
+dbdock status
+```
+
+Shows configured schedules and, if DBdock is running as a long-lived process (via PM2), the service health.
+
+## Sample output
+
+```
+📅 Scheduled Backups:
+
+┌─────┬──────────────┬─────────────────┬──────────┐
+│  #  │ Name         │ Cron Expression │ Status   │
+├─────┼──────────────┼─────────────────┼──────────┤
+│   1 │ daily        │ 0 2 * * *       │ ✓ Active │
+│   2 │ weekly       │ 0 0 * * 0       │ ✗ Paused │
+└─────┴──────────────┴─────────────────┴──────────┘
+
+Total: 2 schedule(s) — 1 active, 1 paused
+
+🚀 Service Status:
+
+🟢 Running (PM2)
+  PID: 12345
+  Uptime: 2d 5h
+  Memory: 45.23 MB
+```
+
+## When there's no service running
+
+If DBdock isn't running as a background process, the status section shows:
+
+```
+🔴 Not running
+
+   Schedules won't execute automatically.
+   See https://docs.dbdock.xyz/alerts/scheduling for setup.
+```
+
+This is normal if you trigger backups via system cron or CI — schedules in the config file are only used when DBdock itself is the scheduler.
+
+## Use cases
+
+- Check schedule configuration at a glance
+- Verify DBdock is running after a deploy
+- Quick health check before relying on a scheduled backup
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock schedule" icon="clock" href="/cli/schedule">
+    Add or modify schedules.
+  </Card>
+  <Card title="dbdock test" icon="stethoscope" href="/cli/test">
+    Validate connections and alert config.
+  </Card>
+</CardGroup>

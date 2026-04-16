@@ -1,0 +1,70 @@
+---
+title: 'Storage overview'
+description: 'Choose where DBdock puts your backups.'
+---
+
+DBdock supports four storage backends, all exposed through the same config shape and all swappable without re-configuring backups.
+
+<CardGroup cols={2}>
+  <Card title="Local disk" icon="folder" href="/storage/local">
+    Filesystem storage — fastest, no network, no cost.
+  </Card>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    Industry standard, mature ecosystem. Any S3-compatible service works.
+  </Card>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Zero egress fees — if you restore frequently, this is the cheapest cloud option.
+  </Card>
+  <Card title="Cloudinary" icon="image" href="/storage/cloudinary">
+    Generous free tier, fastest to get started, no AWS/Cloudflare account needed.
+  </Card>
+</CardGroup>
+
+## Picking a provider
+
+| You want... | Use |
+|---|---|
+| Fastest possible backup/restore | Local (if single server) |
+| Standard cloud backup with wide tool support | S3 |
+| Cheap cloud storage with no egress fees | R2 |
+| Free tier, no cloud account | Cloudinary |
+| Multi-region backup destination | S3 or R2 with cross-region replication |
+| Compliance (HIPAA, SOC 2) | S3 with KMS + bucket policies |
+
+## How DBdock uses storage
+
+Regardless of provider:
+
+1. Backup is **streamed** (never buffered to disk) to the provider
+2. Files live under a `dbdock_backups/` prefix with standardized naming
+3. Metadata is stored alongside each backup for `list` and `restore`
+4. Deletion is always soft — you'll confirm before anything is removed
+
+## File layout
+
+```
+<bucket-or-root>/
+  dbdock_backups/
+    backup-2026-04-16-08-00-00-abc123.sql
+    backup-2026-04-16-08-00-00-abc123.meta.json
+    backup-2026-04-15-08-00-00-def456.sql
+    backup-2026-04-15-08-00-00-def456.meta.json
+    ...
+```
+
+The metadata file tracks size, compression, encryption, duration, and origin.
+
+## Switching providers
+
+You can switch anytime. Existing backups stay in the old provider; new backups go to the new one. To consolidate, manually move old files or do a `dbdock list` on each provider and track both.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/core/configuration">
+    How storage is configured.
+  </Card>
+  <Card title="Security" icon="lock" href="/core/security">
+    Storage security best practices.
+  </Card>
+</CardGroup>

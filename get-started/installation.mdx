@@ -1,0 +1,122 @@
+---
+title: 'Installation'
+description: 'Install DBdock globally, use with npx, or add it as a library dependency.'
+---
+
+## Prerequisites
+
+<CardGroup cols={2}>
+  <Card title="Node.js 18+" icon="node-js">
+    DBdock requires Node.js 18 or later.
+  </Card>
+  <Card title="PostgreSQL client tools" icon="database">
+    `pg_dump`, `pg_restore`, and `psql` must be on your `PATH`.
+  </Card>
+</CardGroup>
+
+### Install PostgreSQL client tools
+
+<AccordionGroup>
+  <Accordion title="macOS" icon="apple">
+    ```bash
+    brew install postgresql
+    ```
+  </Accordion>
+  <Accordion title="Ubuntu / Debian" icon="ubuntu">
+    ```bash
+    sudo apt-get update
+    sudo apt-get install postgresql-client
+    ```
+  </Accordion>
+  <Accordion title="Fedora / RHEL" icon="fedora">
+    ```bash
+    sudo dnf install postgresql
+    ```
+  </Accordion>
+  <Accordion title="Windows" icon="windows">
+    Download the installer from the [PostgreSQL downloads page](https://www.postgresql.org/download/windows/).
+    Select only the "Command Line Tools" component if you don't need the full server.
+  </Accordion>
+</AccordionGroup>
+
+Verify the tools are available:
+
+```bash
+pg_dump --version
+pg_restore --version
+psql --version
+```
+
+## Install DBdock
+
+<Tabs>
+  <Tab title="npx (no install)">
+    Always uses the latest published version. Best for one-off tasks.
+
+    ```bash
+    npx dbdock --help
+    ```
+  </Tab>
+  <Tab title="Global install">
+    Best for daily use — `dbdock` is available from any directory.
+
+    ```bash
+    npm install -g dbdock
+    # or
+    pnpm add -g dbdock
+    # or
+    yarn global add dbdock
+    ```
+
+    Verify:
+
+    ```bash
+    dbdock --version
+    ```
+  </Tab>
+  <Tab title="Project dependency">
+    Use DBdock programmatically in a Node.js app.
+
+    ```bash
+    npm install dbdock
+    ```
+
+    See the [SDK overview](/sdk/overview) to get started.
+  </Tab>
+</Tabs>
+
+## Permission errors
+
+If `npm install -g` fails with `EACCES`:
+
+<AccordionGroup>
+  <Accordion title="Fix: configure npm's global prefix">
+    The recommended fix is to point npm at a directory you own:
+
+    ```bash
+    mkdir -p ~/.npm-global
+    npm config set prefix '~/.npm-global'
+    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
+    source ~/.zshrc
+    npm install -g dbdock
+    ```
+  </Accordion>
+  <Accordion title="Workaround: sudo">
+    Only if you understand the implications:
+
+    ```bash
+    sudo npm install -g dbdock
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
+    Run your first backup in 5 minutes.
+  </Card>
+  <Card title="Concepts" icon="book" href="/core/concepts">
+    Understand how DBdock thinks about backups.
+  </Card>
+</CardGroup>

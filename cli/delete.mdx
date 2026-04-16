@@ -1,0 +1,68 @@
+---
+title: 'dbdock delete'
+description: 'Delete specific backups or all backups.'
+---
+
+```bash
+npx dbdock delete [options]
+```
+
+## Modes
+
+<Tabs>
+  <Tab title="Interactive">
+    Default mode — DBdock shows a picker.
+
+    ```bash
+    npx dbdock delete
+    ```
+  </Tab>
+  <Tab title="By ID">
+    Delete a specific backup by its ID.
+
+    ```bash
+    npx dbdock delete --key backup-2026-04-16-08-00-00-abc123
+    ```
+  </Tab>
+  <Tab title="All">
+    Delete every backup. Requires confirmation.
+
+    ```bash
+    npx dbdock delete --all
+    ```
+
+    <Warning>
+    This is destructive and cannot be undone. DBdock will ask you to type the database name to confirm.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--key <id>` | Delete a specific backup by ID |
+| `--all` | Delete every backup (requires confirmation) |
+
+## Difference from `cleanup`
+
+`delete` is manual and ad-hoc. `cleanup` applies the retention policy defined in your config.
+
+<CardGroup cols={2}>
+  <Card title="Use delete when..." icon="trash">
+    - You want to remove specific bad/test backups
+    - You're decommissioning a project
+    - You need to nuke everything immediately
+  </Card>
+  <Card title="Use cleanup when..." icon="broom" href="/cli/cleanup">
+    - You want automatic retention
+    - You want to apply `maxBackups` / `maxAgeDays` rules
+    - You want a dry run first
+  </Card>
+</CardGroup>
+
+## Safety
+
+- Interactive mode always shows what will be deleted before confirmation
+- `--all` requires typing the database name as confirmation
+- Deletes happen one at a time with logging — if one fails, the rest continue

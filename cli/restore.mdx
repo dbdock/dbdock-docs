@@ -1,0 +1,96 @@
+---
+title: 'dbdock restore'
+description: 'Interactive restore with smart filtering and migration support.'
+---
+
+```bash
+npx dbdock restore
+```
+
+DBdock lists available backups and lets you pick one. When you have 50+ backups, it auto-enables smart filtering so you don't scroll through walls of text.
+
+## Interactive flow
+
+```
+? Select a backup to restore:
+  ❯ backup-2026-04-16-08-00-00-abc123 (45.2 MB) — 2 hours ago
+    backup-2026-04-15-08-00-00-def456 (45.1 MB) — 1 day ago
+    backup-2026-04-14-08-00-00-ghi789 (44.8 MB) — 2 days ago
+    Show more...
+    Filter by...
+```
+
+After picking:
+
+```
+Progress:
+────────────────────────────────────────────────────────
+  ✔ Downloading backup
+  ✔ Decrypting data
+  ✔ Decompressing data
+  ⟳ Restoring to database...
+────────────────────────────────────────────────────────
+✔ All steps completed in 8.42s
+```
+
+## Smart filtering
+
+When you have many backups, DBdock offers filtering options:
+
+- **Recent** — last 10
+- **Date range** — 24h, 7d, 30d, 90d, or custom
+- **Search** — by keyword in the backup ID or by ID prefix
+
+Use `dbdock list` for non-interactive filtering.
+
+## Restore destinations
+
+At the start of the restore flow, DBdock asks where to restore:
+
+<CardGroup cols={2}>
+  <Card title="Current database" icon="database">
+    Restore into the database configured in `dbdock.config.json`. Most common.
+  </Card>
+  <Card title="New database instance" icon="arrow-right">
+    Restore into a different database. Great for staging refreshes or recovery drills.
+  </Card>
+</CardGroup>
+
+### Restoring to a different database
+
+1. Select a backup
+2. Pick "New Database Instance (Migrate)"
+3. Enter target connection: host, port, user, password, database name
+4. DBdock shows source stats and target database state, then asks for confirmation
+
+This is the same engine that powers `dbdock copydb` — see [Staging refresh guide](/guides/staging-refresh) for common workflows.
+
+## What happens under the hood
+
+1. **List** — fetches backup metadata from storage
+2. **Download** — streams from storage (S3/R2/Cloudinary/local)
+3. **Decrypt** (if encrypted) — AES-256-GCM using `DBDOCK_ENCRYPTION_SECRET`
+4. **Decompress** (if compressed) — zstd
+5. **Restore** — runs `pg_restore` (or `psql` for plain format)
+
+## Gotchas
+
+### Target database must exist
+
+DBdock doesn't create the target database for you. If the database doesn't exist:
+
+```bash
+psql -h host -p port -U user -c "CREATE DATABASE mydb;"
+```
+
+### Target database should be empty (or you know what you're doing)
+
+`pg_restore` has `--clean` behavior which drops existing objects. For a completely clean restore, drop and recreate the target first.
+
+### Encryption key
+
+Encrypted backups cannot be restored without the same `DBDOCK_ENCRYPTION_SECRET` that created them. If you're restoring to a new environment, copy the key first.
+
+## Programmatic restore
+
+Restore is CLI-only at the moment. Programmatic restore is planned — follow [dbdock/dbdock#issues](https://github.com/dbdock/dbdock/issues) for updates.

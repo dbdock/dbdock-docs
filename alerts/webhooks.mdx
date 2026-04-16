@@ -1,0 +1,130 @@
+---
+title: 'Custom webhooks'
+description: 'Send alerts to Discord, Teams, WhatsApp, or any HTTP endpoint.'
+---
+
+DBdock can POST alerts to any HTTP endpoint. This opens the door to Discord, Microsoft Teams, WhatsApp via third-party bridges, and your own internal services.
+
+## Configuration
+
+```bash
+DBDOCK_CUSTOM_WEBHOOK=https://your-service.example.com/api/hooks/dbdock
+```
+
+DBdock POSTs a JSON payload to that URL on every backup event.
+
+## Payload shape
+
+### Success
+
+```json
+{
+  "event": "backup.success",
+  "timestamp": "2026-04-16T08:00:08.432Z",
+  "database": "myapp",
+  "backup": {
+    "id": "backup-2026-04-16-08-00-00-abc123",
+    "size": 47392028,
+    "compressedSize": 12056312,
+    "duration": 8432,
+    "encrypted": true,
+    "compressed": true,
+    "storageKey": "s3://my-backups/dbdock_backups/backup-...sql"
+  }
+}
+```
+
+### Failure
+
+```json
+{
+  "event": "backup.failure",
+  "timestamp": "2026-04-16T08:00:02.100Z",
+  "database": "myapp",
+  "error": {
+    "message": "Connection timeout",
+    "code": "ETIMEDOUT",
+    "stack": "..."
+  }
+}
+```
+
+## Discord
+
+Discord accepts Slack-formatted payloads at its webhook URL with `/slack` appended:
+
+```
+https://discord.com/api/webhooks/<id>/<token>/slack
+```
+
+Set that as your `DBDOCK_SLACK_WEBHOOK` (not the custom webhook) — DBdock's Slack alerts format correctly for Discord.
+
+For richer Discord messages, use the custom webhook and write your own translator service.
+
+## Microsoft Teams
+
+Teams incoming webhook URLs accept Slack-like payloads via the [Workflows app](https://support.microsoft.com/en-us/office/create-incoming-webhooks-with-workflows-for-microsoft-teams-8ae491c7-0394-4861-ba59-055e33f75498).
+
+If you're using the Workflows approach, create a flow "When a Teams webhook request is received" and point `DBDOCK_CUSTOM_WEBHOOK` at its URL.
+
+## WhatsApp
+
+WhatsApp doesn't have official webhooks. You'll need a bridge service:
+
+- **Twilio WhatsApp API** — POST from your own service that wraps Twilio
+- **WhatsApp Business API providers** — 360dialog, Gupshup, etc.
+
+Point `DBDOCK_CUSTOM_WEBHOOK` at your bridge service, which then forwards to WhatsApp.
+
+## Writing your own bridge
+
+A minimal Node.js bridge that receives DBdock alerts and forwards them:
+
+```javascript
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/hooks/dbdock', async (req, res) => {
+  const { event, database, backup, error } = req.body;
+
+  if (event === 'backup.success') {
+    await sendToMyService(`✓ ${database} backup complete (${backup.id})`);
+  } else if (event === 'backup.failure') {
+    await sendToMyService(`✗ ${database} backup failed: ${error.message}`);
+  }
+
+  res.status(200).send('ok');
+});
+
+app.listen(3000);
+```
+
+Deploy anywhere (Cloud Run, Lambda, your own server) and set `DBDOCK_CUSTOM_WEBHOOK` to its URL.
+
+## Delivery behavior
+
+- POST with `Content-Type: application/json`
+- 10-second timeout
+- No retries — if your endpoint is down, the alert is lost (DBdock logs the error)
+- Alert delivery does not block backup completion
+
+## Security
+
+- The webhook URL is a secret if your endpoint doesn't have its own auth
+- For sensitive deployments, add a shared secret in your endpoint URL or as a query param:
+  ```
+  DBDOCK_CUSTOM_WEBHOOK=https://api.example.com/hooks?token=shared-secret
+  ```
+- Then validate `token` in your service.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Slack alerts" icon="slack" href="/alerts/slack">
+    Built-in Slack support.
+  </Card>
+  <Card title="Email alerts" icon="envelope" href="/alerts/email">
+    SMTP notifications.
+  </Card>
+</CardGroup>

@@ -1,0 +1,188 @@
+---
+title: 'Retention strategies'
+description: 'Recommended backup retention policies for different workloads.'
+---
+
+Backups accumulate. A retention policy decides what to keep and what to delete. This page walks through common patterns.
+
+## The three knobs
+
+Every DBdock retention policy combines three numbers:
+
+| Field | What it does |
+|---|---|
+| `maxBackups` | Hard cap on total count — oldest first |
+| `maxAgeDays` | Delete anything older than N days |
+| `minBackups` | Safety net — never go below this count |
+
+The safety net wins: if rules say "delete everything" but you only have 3 backups and `minBackups: 5`, nothing is deleted.
+
+See [`dbdock cleanup`](/cli/cleanup) for the command that applies the policy.
+
+## Pattern 1 — minimal (small side project)
+
+```json
+{
+  "backup": {
+    "retention": {
+      "enabled": true,
+      "maxBackups": 14,
+      "maxAgeDays": 14,
+      "minBackups": 3,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+Two weeks of daily backups. If backups happen less than daily, keeps enough to recover from a recent failure. Cheap storage, minimal compliance.
+
+**Good for:** side projects, dev/staging databases, early-stage startups.
+
+## Pattern 2 — standard production (daily backups)
+
+```json
+{
+  "backup": {
+    "retention": {
+      "enabled": true,
+      "maxBackups": 90,
+      "maxAgeDays": 90,
+      "minBackups": 7,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+Three months of daily backups. Handles the common "oh no, this bug was introduced 6 weeks ago" scenario.
+
+**Good for:** most production Postgres setups without specific compliance needs.
+
+## Pattern 3 — compliance (long retention)
+
+For SOC 2, HIPAA, or similar frameworks that require 1+ year retention.
+
+```json
+{
+  "backup": {
+    "retention": {
+      "enabled": true,
+      "maxBackups": 400,
+      "maxAgeDays": 400,
+      "minBackups": 30,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+Daily backups for 13 months. Combines with S3/R2 lifecycle rules (move to Glacier after 30 days) to reduce cost:
+
+```json
+{
+  "Rules": [
+    {
+      "Id": "archive-old-dbdock-backups",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "dbdock_backups/" },
+      "Transitions": [
+        { "Days": 30, "StorageClass": "GLACIER" }
+      ]
+    }
+  ]
+}
+```
+
+**Good for:** regulated industries, enterprise deployments.
+
+## Pattern 4 — hourly with tiered retention
+
+High-churn databases where 24h RPO isn't enough. Run backups hourly:
+
+```json
+{
+  "backup": {
+    "retention": {
+      "enabled": true,
+      "maxBackups": 168,
+      "maxAgeDays": 7,
+      "minBackups": 12,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+168 backups = 7 days × 24 hours. Combine with a second scheduler that keeps daily snapshots:
+
+```
+0 * * * *  cd /app && npx dbdock backup
+```
+
+Daily snapshots with longer retention require either:
+
+- A separate DBdock config that writes to a different storage prefix with longer `maxAgeDays`
+- Or manual promotion — copy a daily backup to a "long-term" prefix outside `dbdock_backups/`
+
+## Pattern 5 — grandfather-father-son (classic)
+
+Not natively supported by DBdock's 3-knob policy, but achievable with external tooling:
+
+- **Son (daily):** 7 days
+- **Father (weekly):** 4 weeks
+- **Grandfather (monthly):** 12 months
+
+Implement by running three separate DBdock configs to three separate storage prefixes, each with its own retention. Or use a cloud lifecycle rule on top of a single prefix.
+
+## Choosing values
+
+### `maxBackups` vs `maxAgeDays`
+
+Both apply — the tighter one wins:
+
+- `maxBackups: 30`, `maxAgeDays: 30`, daily schedule → 30 backups (both match)
+- `maxBackups: 30`, `maxAgeDays: 365`, daily schedule → 30 backups (`maxBackups` wins)
+- `maxBackups: 365`, `maxAgeDays: 30`, hourly schedule → ~720 backups (`maxAgeDays` wins)
+
+Set both so one acts as a ceiling and the other as a floor.
+
+### `minBackups`
+
+- Development: `3`
+- Staging: `5`
+- Production: `7` or higher
+
+Think of it as: "if everything went wrong and I stopped taking backups, how many days of history do I always want on hand?"
+
+### `runAfterBackup`
+
+- `true` (default) — cleanup runs right after each successful backup. Keeps storage tidy automatically.
+- `false` — cleanup only runs when `dbdock cleanup` is invoked manually. Useful if you have a separate retention orchestration.
+
+## Monitoring retention
+
+```bash
+npx dbdock list
+```
+
+Check the backup count and oldest date periodically to confirm retention is working. If you expect 30 backups and see 300, something is wrong with `runAfterBackup` or the cron.
+
+Even better, have your alerting check:
+
+```bash
+npx dbdock list --limit 1000 | wc -l
+```
+
+And alert if the count drifts outside expected bounds.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock cleanup" icon="broom" href="/cli/cleanup">
+    Apply the retention policy.
+  </Card>
+  <Card title="Production checklist" icon="list-check" href="/guides/production-checklist">
+    Pre-flight for prod deployment.
+  </Card>
+</CardGroup>

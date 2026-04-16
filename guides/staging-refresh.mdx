@@ -1,0 +1,127 @@
+---
+title: 'Refresh staging from production'
+description: 'Keep staging databases current with production data using dbdock copydb.'
+---
+
+One of the most common DBdock workflows: overnight, pull production data into staging so the team starts each day with realistic data.
+
+## The simple version
+
+```bash
+npx dbdock copydb "$PROD_URL" "$STAGING_URL"
+```
+
+That's it — `copydb` streams from source to target with no intermediate file. Confirm the prompt and DBdock takes care of the rest.
+
+## Scheduled overnight refresh
+
+Create a cron job (or Kubernetes CronJob / GitHub Actions scheduled workflow):
+
+```
+0 3 * * *  /app/scripts/refresh-staging.sh >> /var/log/refresh.log 2>&1
+```
+
+`refresh-staging.sh`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PROD_URL="${PROD_URL}"
+export STAGING_URL="${STAGING_URL}"
+
+echo "[$(date -u +%FT%TZ)] Starting staging refresh"
+
+# Drop and recreate the staging database to guarantee a clean slate
+psql "$STAGING_URL" -c "DROP DATABASE IF EXISTS myapp_staging;"
+psql "$STAGING_URL" -c "CREATE DATABASE myapp_staging;"
+
+# Copy production into the fresh staging database
+npx --yes dbdock copydb "$PROD_URL" "$STAGING_URL" --yes
+
+echo "[$(date -u +%FT%TZ)] Refresh complete"
+```
+
+## Scrubbing sensitive data
+
+<Warning>
+**Real user data in staging is a privacy/compliance risk.** If your production database has PII, health data, payment info, or any regulated data, you need to scrub it before developers touch it.
+</Warning>
+
+The scrub-before-share pattern:
+
+```bash
+# 1. Copy prod to a "clean room" staging database
+npx dbdock copydb "$PROD_URL" "$CLEAN_ROOM_URL"
+
+# 2. Scrub the clean room
+psql "$CLEAN_ROOM_URL" <<'SQL'
+  UPDATE users SET
+    email = 'user' || id || '@example.invalid',
+    phone = NULL,
+    ssn = NULL;
+  UPDATE payment_methods SET
+    card_last4 = '0000';
+  DELETE FROM audit_logs WHERE created_at < now() - interval '90 days';
+SQL
+
+# 3. Copy the scrubbed clean room to the developer-facing staging
+npx dbdock copydb "$CLEAN_ROOM_URL" "$STAGING_URL"
+
+# 4. Clean up the clean room
+psql "$CLEAN_ROOM_URL" -c "DROP DATABASE clean_room;"
+```
+
+## Partial refresh (schema only)
+
+Want to keep staging's data but align its schema with production?
+
+```bash
+npx dbdock copydb --schema-only "$PROD_URL" "$STAGING_URL"
+```
+
+This copies DDL (tables, columns, indexes, constraints) but not rows. Useful for schema drift detection.
+
+## Stale data detection
+
+Add a check that staging is recent:
+
+```sql
+-- In staging
+SELECT max(updated_at) FROM events;
+```
+
+If the max is more than 24 hours old, alert the team — the refresh job may be broken.
+
+## Development workflow
+
+For individual developers who want to pull latest prod data into their local:
+
+```bash
+# Pull prod to local once
+npx dbdock copydb "$PROD_URL" "postgresql://localhost:5432/myapp"
+
+# Later, refresh from staging instead of prod (less load on prod)
+npx dbdock copydb "$STAGING_URL" "postgresql://localhost:5432/myapp"
+```
+
+## Serverless Postgres hosts
+
+If your staging or production is on a serverless Postgres (Neon, Supabase pooler, PlanetScale Postgres), pass `--driver`:
+
+```bash
+npx dbdock copydb --driver "$NEON_URL" "$STAGING_URL"
+```
+
+See the [`copydb` reference](/cli/copydb) for details.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock copydb" icon="copy" href="/cli/copydb">
+    Full command reference.
+  </Card>
+  <Card title="Retention strategies" icon="broom" href="/guides/retention-strategies">
+    Keep backup counts sane.
+  </Card>
+</CardGroup>

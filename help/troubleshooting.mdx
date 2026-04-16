@@ -1,0 +1,217 @@
+---
+title: 'Troubleshooting'
+description: 'Common DBdock issues and how to fix them.'
+---
+
+<Tip>
+**First step, always:** `npx dbdock test`. It validates your database, storage, encryption, and alert config in one shot.
+</Tip>
+
+## Installation issues
+
+### `pg_dump`, `pg_restore`, or `psql` not found
+
+DBdock uses PostgreSQL's command-line tools. Install them:
+
+<AccordionGroup>
+  <Accordion title="macOS">
+    ```bash
+    brew install postgresql
+    ```
+  </Accordion>
+  <Accordion title="Ubuntu / Debian">
+    ```bash
+    sudo apt-get update
+    sudo apt-get install postgresql-client
+    ```
+  </Accordion>
+  <Accordion title="Fedora / RHEL">
+    ```bash
+    sudo dnf install postgresql
+    ```
+  </Accordion>
+  <Accordion title="Windows">
+    Install from [postgresql.org](https://www.postgresql.org/download/windows/) — choose "Command Line Tools" if you don't want the full server.
+  </Accordion>
+</AccordionGroup>
+
+Verify: `pg_dump --version`
+
+### `EACCES` on `npm install -g dbdock`
+
+Don't use `sudo`. Configure npm's global prefix to a directory you own:
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
+source ~/.zshrc
+npm install -g dbdock
+```
+
+## Configuration issues
+
+### Secrets still in `dbdock.config.json`
+
+Migrate them to `.env`:
+
+```bash
+npx dbdock migrate-config
+```
+
+See [`dbdock migrate-config`](/cli/migrate-config).
+
+### Strict mode failures
+
+If `DBDOCK_STRICT_MODE=true` and you see errors about secrets in config, run `migrate-config` — strict mode refuses any config file that contains secrets.
+
+### Missing environment variables
+
+DBdock needs at minimum:
+
+- **Database** — either `DBDOCK_DB_URL` / `DATABASE_URL`, or `DBDOCK_DB_PASSWORD` (with connection details in the config file)
+- **Storage credentials** if using S3/R2/Cloudinary
+- **`DBDOCK_ENCRYPTION_SECRET`** if encryption is enabled
+
+Check your `.env` exists and contains the right variables. See the [configuration reference](/core/configuration#environment-variables-reference).
+
+## Database connection errors
+
+### `password authentication failed`
+
+- Your password is wrong or has been rotated
+- If using `DBDOCK_DB_URL`, password is URL-encoded — special characters like `@`, `#`, `/` must be percent-encoded
+
+### `could not connect to server: Connection refused`
+
+- Postgres server isn't running on that host/port
+- Firewall blocks outbound connection (check security groups, network ACLs)
+- Test manually: `psql -h HOST -p PORT -U USER -d DBNAME`
+
+### `connection timed out`
+
+- Remote server is unreachable
+- If on a cloud VPC, check security groups allow traffic from your runner
+- Increase timeout: not configurable in DBdock, use network/firewall fixes instead
+
+### `.pgpass` not being used
+
+- File must be at `~/.pgpass`
+- File permissions must be exactly `0600`: `chmod 600 ~/.pgpass`
+- Format: `host:port:database:user:password` — no spaces
+
+## Storage errors
+
+### AWS S3
+
+<Steps>
+  <Step title="Verify credentials">
+    `DBDOCK_STORAGE_ACCESS_KEY` and `DBDOCK_STORAGE_SECRET_KEY` set in `.env`. Try `aws s3 ls s3://your-bucket` to test.
+  </Step>
+  <Step title="Check IAM permissions">
+    Required: `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, `s3:DeleteObject`.
+  </Step>
+  <Step title="Verify bucket + region">
+    Bucket name must match config exactly. Region must match the bucket's actual region.
+  </Step>
+  <Step title="Clock drift">
+    S3 rejects requests more than 15 min off. Check `date` on your machine vs `date` on a trusted server.
+  </Step>
+</Steps>
+
+### Cloudflare R2
+
+- Endpoint URL: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` (not `pub-<hash>.r2.dev`)
+- Account ID is in your Cloudflare dashboard sidebar
+- API token must have Object Read & Write scope
+- Region is always `auto`
+
+### Cloudinary
+
+- `cloudName` in config must exactly match dashboard (case-sensitive)
+- API credentials are under Dashboard → Account Details
+- Free tier is 25 GB — check usage in dashboard
+
+## Encryption key errors
+
+### Invalid encryption key
+
+The key must be **exactly 64 hexadecimal characters** (0-9, a-f):
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Store in `.env` as `DBDOCK_ENCRYPTION_SECRET`.
+
+### Restore fails with decryption error
+
+- Wrong key — old backups need the key they were encrypted with
+- See [Key rotation guide](/guides/key-rotation) for restoring backups encrypted with an old key
+
+<Warning>
+If you've lost the encryption key and have no backup of the key itself, the encrypted data is **not recoverable**. This is by design.
+</Warning>
+
+## No backups found during restore
+
+```bash
+npx dbdock list
+```
+
+If `list` shows nothing:
+
+<CardGroup cols={2}>
+  <Card title="Local storage" icon="folder">
+    - Check files exist in the configured `path`
+    - File permissions allow reading
+    - Files follow pattern: `backup-*.sql`
+  </Card>
+  <Card title="S3 / R2" icon="cloud">
+    - Files are in the `dbdock_backups/` prefix
+    - Correct bucket + region
+    - Filenames match: `backup-*.sql`
+  </Card>
+  <Card title="Cloudinary" icon="image">
+    - Look in `dbdock_backups` folder in Media Library
+    - Correct cloud name
+    - Filenames match: `backup-*.sql`
+  </Card>
+</CardGroup>
+
+## Alerts not delivering
+
+### Email
+
+- Check spam folder first
+- Verify SMTP credentials (Gmail needs App Password, not account password)
+- Provider's activity/send logs (SendGrid, SES, Mailgun all have dashboards)
+- Run `npx dbdock test` to send a test
+
+### Slack
+
+- Webhook URL still valid (recreate if deleted)
+- Channel still exists
+- App still installed in workspace
+
+## Getting more help
+
+Still stuck?
+
+<CardGroup cols={2}>
+  <Card title="GitHub Discussions" icon="comments" href="https://github.com/dbdock/dbdock/discussions">
+    Ask the community.
+  </Card>
+  <Card title="Open an issue" icon="bug" href="https://github.com/dbdock/dbdock/issues">
+    Report a bug or request a feature.
+  </Card>
+</CardGroup>
+
+<Tip>
+When reporting issues, always include:
+
+- DBdock version (`dbdock --version`)
+- Node version (`node --version`)
+- OS
+- Output of `npx dbdock test` (redact any credentials before sharing)
+</Tip>

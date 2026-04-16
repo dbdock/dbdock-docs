@@ -1,0 +1,167 @@
+---
+title: 'Email alerts (SMTP)'
+description: 'Send backup notifications via any SMTP provider.'
+---
+
+DBdock sends email via standard SMTP — any provider works.
+
+## Configuration
+
+### `dbdock.config.json`
+
+```json
+{
+  "alerts": {
+    "email": {
+      "enabled": true,
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "secure": false
+      },
+      "from": "backups@yourapp.com",
+      "to": ["admin@yourapp.com", "devops@yourapp.com"]
+    }
+  }
+}
+```
+
+### `.env`
+
+```bash
+DBDOCK_SMTP_USER=your-smtp-username
+DBDOCK_SMTP_PASS=your-smtp-password
+```
+
+Multiple `to` addresses are supported — all recipients get every alert.
+
+## Provider setup
+
+<AccordionGroup>
+  <Accordion title="Gmail" icon="google">
+    ```json
+    "smtp": { "host": "smtp.gmail.com", "port": 587, "secure": false }
+    ```
+    ```bash
+    DBDOCK_SMTP_USER=your-email@gmail.com
+    DBDOCK_SMTP_PASS=your-app-password
+    ```
+
+    **Important:** Gmail requires an [App Password](https://support.google.com/accounts/answer/185833), not your regular account password. Enable 2FA first, then generate an App Password for "Mail".
+  </Accordion>
+
+  <Accordion title="SendGrid" icon="envelope">
+    ```json
+    "smtp": { "host": "smtp.sendgrid.net", "port": 587, "secure": false }
+    ```
+    ```bash
+    DBDOCK_SMTP_USER=apikey
+    DBDOCK_SMTP_PASS=YOUR_SENDGRID_API_KEY
+    ```
+
+    The username is literally the word `apikey` — not your SendGrid username. The password is the API key.
+  </Accordion>
+
+  <Accordion title="AWS SES" icon="aws">
+    ```json
+    "smtp": { "host": "email-smtp.us-east-1.amazonaws.com", "port": 587, "secure": false }
+    ```
+    ```bash
+    DBDOCK_SMTP_USER=YOUR_SMTP_USERNAME
+    DBDOCK_SMTP_PASS=YOUR_SMTP_PASSWORD
+    ```
+
+    SES SMTP credentials are distinct from your AWS access keys. Generate them from the SES console → SMTP Settings.
+
+    Replace `us-east-1` with your SES region.
+  </Accordion>
+
+  <Accordion title="Mailgun" icon="envelopes-bulk">
+    ```json
+    "smtp": { "host": "smtp.mailgun.org", "port": 587, "secure": false }
+    ```
+    ```bash
+    DBDOCK_SMTP_USER=postmaster@your-domain.mailgun.org
+    DBDOCK_SMTP_PASS=YOUR_MAILGUN_SMTP_PASSWORD
+    ```
+  </Accordion>
+
+  <Accordion title="Postmark" icon="paper-plane">
+    ```json
+    "smtp": { "host": "smtp.postmarkapp.com", "port": 587, "secure": false }
+    ```
+    ```bash
+    DBDOCK_SMTP_USER=YOUR_POSTMARK_SERVER_TOKEN
+    DBDOCK_SMTP_PASS=YOUR_POSTMARK_SERVER_TOKEN
+    ```
+
+    Username and password are the same — both your server token.
+  </Accordion>
+
+  <Accordion title="Custom SMTP">
+    Any SMTP server works:
+    ```json
+    "smtp": { "host": "mail.example.com", "port": 587, "secure": false }
+    ```
+
+    Use `secure: true` + `port: 465` for implicit TLS. Use `secure: false` + `port: 587` for STARTTLS (most modern servers).
+  </Accordion>
+</AccordionGroup>
+
+## Email content
+
+### Success
+
+**Subject:** `✓ Backup complete — myapp (45.2 MB)`
+
+**Body:** backup ID, database, size, duration, storage path, encryption status.
+
+### Failure
+
+**Subject:** `✗ Backup failed — myapp`
+
+**Body:** error message, timestamp, troubleshooting suggestion.
+
+## Testing
+
+```bash
+npx dbdock test
+```
+
+Sends a test email to all `to` addresses. Check spam folders if it doesn't arrive.
+
+## Common issues
+
+<AccordionGroup>
+  <Accordion title="Authentication failed">
+    - Wrong username/password
+    - Gmail: not using an App Password
+    - Provider requires API key, not account password (SendGrid, Postmark)
+  </Accordion>
+  <Accordion title="Connection timeout">
+    - Port blocked by network firewall
+    - Try port 465 with `secure: true` instead of 587
+  </Accordion>
+  <Accordion title="Email not received">
+    - Check spam folder
+    - Verify `from` address is allowed by the provider (SendGrid/SES require domain verification)
+    - Check provider's send logs (SendGrid activity feed, SES CloudWatch)
+  </Accordion>
+</AccordionGroup>
+
+## Security
+
+- SMTP credentials live in `.env`, never in `dbdock.config.json`
+- DBdock uses STARTTLS when `secure: false` + port 587
+- If your SMTP server requires a certificate chain outside the Node defaults, you'll need to set `NODE_EXTRA_CA_CERTS`
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Slack alerts" icon="slack" href="/alerts/slack">
+    Real-time Slack notifications.
+  </Card>
+  <Card title="Custom webhooks" icon="webhook" href="/alerts/webhooks">
+    Discord, WhatsApp, and custom endpoints.
+  </Card>
+</CardGroup>

@@ -1,0 +1,105 @@
+---
+title: 'dbdock backup'
+description: 'Create a database backup with compression and encryption.'
+---
+
+```bash
+npx dbdock backup [options]
+```
+
+Runs `pg_dump`, optionally compresses and encrypts the output, and streams it directly to your configured storage provider. You'll see real-time progress:
+
+```
+████████████████████ | 100% | 45.23/100 MB | Speed: 12.50 MB/s | ETA: 0s | Uploading to S3
+✔ Backup completed successfully
+```
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--encrypt` | Force encryption on (overrides config) |
+| `--no-encrypt` | Force encryption off (overrides config) |
+| `--compress` | Force compression on (overrides config) |
+| `--no-compress` | Force compression off (overrides config) |
+| `--encryption-key <key>` | Use a specific 64-char hex key for this backup |
+| `--compression-level <1-11>` | zstd compression level (default `6`) |
+
+## Examples
+
+### Standard backup
+
+Uses everything from your config file:
+
+```bash
+npx dbdock backup
+```
+
+### Force maximum compression
+
+```bash
+npx dbdock backup --compress --compression-level 11
+```
+
+Useful for archival backups where you'll keep them for months.
+
+### Fast backup, no compression
+
+```bash
+npx dbdock backup --no-compress
+```
+
+When your storage is cheap and restore speed matters more than size.
+
+### One-off with explicit encryption key
+
+```bash
+npx dbdock backup --encrypt --encryption-key "$(cat ~/.keys/dbdock.key)"
+```
+
+Overrides `DBDOCK_ENCRYPTION_SECRET` just for this run.
+
+## Backup formats
+
+The format comes from `dbdock.config.json`:
+
+```json
+{
+  "backup": { "format": "custom" }
+}
+```
+
+| Format | Extension | Notes |
+|---|---|---|
+| `custom` (default) | `.sql` | Binary, pg_dump's native compression, selective restore |
+| `plain` | `.sql` | Human-readable SQL, works with `psql` directly |
+| `directory` | `.dir` | Parallel dump support for huge DBs |
+| `tar` | `.tar` | Tar archive of directory format |
+
+See [Concepts → backup formats](/core/concepts#backup-formats) for when to pick which.
+
+## What happens under the hood
+
+1. **Connect** — validates database credentials
+2. **Dump** — runs `pg_dump` with your configured format
+3. **Compress** (if enabled) — zstd at configured level
+4. **Encrypt** (if enabled) — AES-256-GCM with key derived from secret
+5. **Upload** — streams to your storage provider, no temp files
+6. **Record metadata** — size, duration, flags, storage key
+7. **Send alerts** (if configured) — Slack/email
+8. **Retention** (if `runAfterBackup: true`) — cleanup old backups
+
+## After the backup
+
+```bash
+npx dbdock list      # See it in the list
+npx dbdock restore   # Restore to verify
+```
+
+## Generating an encryption key
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Store the output in `.env` as `DBDOCK_ENCRYPTION_SECRET`. See [Security](/core/security) for key management.

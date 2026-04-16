@@ -1,0 +1,126 @@
+---
+title: 'Production deployment checklist'
+description: 'Everything to verify before relying on DBdock in production.'
+---
+
+Before DBdock is responsible for backups you'd cry to lose, walk through this list.
+
+## Setup
+
+- [ ] Database connection works (`dbdock test`)
+- [ ] Storage provider credentials work (`dbdock test`)
+- [ ] `dbdock.config.json` is committed to your repo
+- [ ] `.env` is in `.gitignore` and never committed
+- [ ] `DBDOCK_STRICT_MODE=true` is set in production
+
+## Security
+
+- [ ] Encryption enabled (`"encryption": { "enabled": true }`)
+- [ ] `DBDOCK_ENCRYPTION_SECRET` is a 64-char hex key
+- [ ] The encryption key is stored in a secret manager (password manager, KMS), not just in `.env`
+- [ ] The encryption key is **not** stored in the same place as the backup destination
+- [ ] Storage bucket is private (block all public access)
+- [ ] Bucket has server-side encryption enabled
+- [ ] IAM user for DBdock has least-privilege permissions only
+- [ ] Bucket has versioning enabled (ransomware protection)
+
+## Backups
+
+- [ ] Test backup completes successfully (`dbdock backup`)
+- [ ] Test restore completes successfully (`dbdock restore`)
+- [ ] Backup size looks right (not suspiciously small)
+- [ ] Restored database has the expected row counts
+
+## Retention
+
+- [ ] Retention policy set (see [Retention strategies](/guides/retention-strategies))
+- [ ] `minBackups` is non-zero so a misconfiguration doesn't wipe everything
+- [ ] `runAfterBackup: true` or a separate `dbdock cleanup` cron is scheduled
+- [ ] Storage cost is projected against your retention (cloud providers' pricing calculators)
+
+## Scheduling
+
+- [ ] Backup schedule set (cron, Kubernetes CronJob, cloud scheduler)
+- [ ] Schedule runs at off-peak hours to avoid production impact
+- [ ] Schedule's machine/runner is monitored — if the runner dies, backups die with it
+
+## Alerts
+
+- [ ] Slack or email alerts configured
+- [ ] Test alert delivered (`dbdock test`)
+- [ ] Alerts go to a channel that gets checked — not a dead channel
+- [ ] On-call has access to the alert channel
+
+## Disaster recovery
+
+- [ ] Run a **full restore drill** — pick a recent backup and restore to a fresh DB
+- [ ] Document the restore procedure so anyone on the team can do it
+- [ ] Test restoring after losing access to the primary storage region (if multi-region)
+- [ ] Document the encryption key location and who has access
+
+## Monitoring
+
+- [ ] Alert on backup failures (from DBdock alerts)
+- [ ] Alert on missing backups (something that tracks "last backup timestamp" and pages if it's too old)
+- [ ] Alert on storage quota — bucket size and growth rate
+- [ ] Log aggregation captures DBdock output (for forensics)
+
+## Documentation
+
+- [ ] Runbook covers: "how do I take a manual backup", "how do I restore", "how do I add a schedule"
+- [ ] Runbook covers: "where is the encryption key", "who has access"
+- [ ] Runbook covers: "what do I do when an alert fires"
+- [ ] On-call docs reference the DBdock docs
+
+## Compliance (if applicable)
+
+- [ ] Retention period meets your framework (SOC 2 typically 1 year+)
+- [ ] Access to backups is logged (cloud CloudTrail / audit logs)
+- [ ] Encryption algorithm is approved for your framework
+- [ ] Backups stored in an approved region
+- [ ] Data residency requirements met
+
+## Ongoing
+
+- [ ] Quarterly restore drill scheduled
+- [ ] Annual key rotation scheduled (see [Key rotation](/guides/key-rotation))
+- [ ] DBdock version kept up to date (`npm outdated`)
+
+## Common mistakes
+
+### "We have backups, we're fine"
+
+Backups that have never been restored aren't backups — they're files. Run a restore drill. You'll find at least one problem the first time.
+
+### Storing the encryption key next to the backups
+
+If an attacker gets your S3 bucket, they shouldn't also get the key. Keep keys in a separate trust domain.
+
+### No minBackups
+
+If `maxAgeDays: 30` and you stop backing up for 31 days, cleanup will delete *everything*. Set `minBackups` as insurance.
+
+### Silent alert failures
+
+A broken SMTP password means no email alerts, but also no warning that alerts are broken. Have a separate liveness check — "did a backup happen in the last 26 hours?"
+
+### Bucket policy lets the world read backups
+
+Even with encryption, having a public bucket is a data exposure risk. Explicitly block public access.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="lock" href="/core/security">
+    Security deep dive.
+  </Card>
+  <Card title="Retention strategies" icon="broom" href="/guides/retention-strategies">
+    Choose a retention policy.
+  </Card>
+  <Card title="Key rotation" icon="key" href="/guides/key-rotation">
+    Rotate the encryption key.
+  </Card>
+  <Card title="Staging refresh" icon="sync" href="/guides/staging-refresh">
+    Keep staging fresh from prod.
+  </Card>
+</CardGroup>

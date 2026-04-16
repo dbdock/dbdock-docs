@@ -1,0 +1,163 @@
+---
+title: 'Schema mapping'
+description: 'How DBdock translates types between MongoDB and PostgreSQL.'
+---
+
+Cross-database migration requires a type system translation. This page documents exactly how DBdock maps types in both directions.
+
+## MongoDB → PostgreSQL
+
+### Scalar types
+
+| BSON type | Postgres type | Notes |
+|---|---|---|
+| `ObjectId` | `uuid` or `text` | Stored as hex string. Use `uuid` if you plan to keep the ID format. |
+| `String` | `text` | Length-agnostic. Use `varchar(n)` if you need a limit. |
+| `Int`, `Long` | `bigint` | Safe default for JS numeric ranges. |
+| `Double`, `Decimal128` | `double precision` or `numeric` | `numeric` preserves exact precision. |
+| `Boolean` | `boolean` | Direct map. |
+| `Date` | `timestamptz` | Always stored as UTC. |
+| `Binary` | `bytea` | Binary data. |
+| `null` | `NULL` | Column must be nullable. |
+
+### Container types
+
+| BSON type | Postgres type | Notes |
+|---|---|---|
+| `Object` (nested) | Flattened columns *or* `jsonb` | Depth ≤ `--max-depth` → flatten; deeper → jsonb. |
+| `Array<T>` | `T[]` (native array) *or* `jsonb` | Homogeneous arrays of scalars → native array; mixed → jsonb. |
+| `Array<Object>` | `jsonb` | Always jsonb — one-to-many relationships aren't auto-derived. |
+
+### Mixed types
+
+If a field has multiple types across documents (e.g., 99% `Int`, 1% `Double`), DBdock picks the "widest" compatible Postgres type. You'll see a warning:
+
+```
+⚠️ users.age: mixed Int/Double → chose double precision
+```
+
+You can override this by editing the exported config file.
+
+### Example
+
+MongoDB:
+
+```json
+{
+  "_id": ObjectId("..."),
+  "email": "alice@example.com",
+  "profile": {
+    "name": "Alice",
+    "avatar_url": "https://..."
+  },
+  "tags": ["admin", "beta"],
+  "metadata": {
+    "deep": {
+      "nested": { "value": 1 }
+    }
+  }
+}
+```
+
+Postgres (with `--max-depth 2`):
+
+```sql
+CREATE TABLE users (
+  id          uuid PRIMARY KEY,
+  email       text UNIQUE NOT NULL,
+  profile_name       text,
+  profile_avatar_url text,
+  tags        text[],
+  metadata    jsonb  -- deep nesting preserved as JSON
+);
+```
+
+## PostgreSQL → MongoDB
+
+### Scalar types
+
+| Postgres type | BSON type | Notes |
+|---|---|---|
+| `uuid` | `String` | UUID as lowercase hex string. |
+| `text`, `varchar` | `String` | Direct map. |
+| `integer`, `bigint` | `Int` / `Long` | `bigint` may need `Long` on 32-bit platforms. |
+| `numeric`, `decimal` | `Decimal128` | Exact precision preserved. |
+| `real`, `double precision` | `Double` | IEEE 754 mapping. |
+| `boolean` | `Boolean` | Direct map. |
+| `date` | `Date` (at midnight UTC) | Date-only types lose time component. |
+| `timestamp`, `timestamptz` | `Date` | Stored as UTC. |
+| `bytea` | `Binary` | Direct map. |
+| `jsonb`, `json` | Native document | Parsed into MongoDB object. |
+
+### Container types
+
+| Postgres type | BSON type | Notes |
+|---|---|---|
+| `T[]` (array) | `Array<T>` | Element types mapped individually. |
+| Foreign key relations | Option: embed or reference | See below. |
+
+### Relationships
+
+DBdock can optionally embed one-to-many relationships into parent documents:
+
+- **Reference mode** (default): stores the FK as-is, creates separate collections.
+- **Embed mode**: pulls child rows into a nested array on the parent document.
+
+Configure per-table in the exported config file.
+
+### Example
+
+Postgres:
+
+```sql
+CREATE TABLE users (
+  id     uuid PRIMARY KEY,
+  email  text UNIQUE
+);
+
+CREATE TABLE posts (
+  id      uuid PRIMARY KEY,
+  user_id uuid REFERENCES users(id),
+  title   text,
+  body    text
+);
+```
+
+MongoDB (reference mode):
+
+```javascript
+// users collection
+{ _id: "...", email: "alice@example.com" }
+
+// posts collection
+{ _id: "...", user_id: "...", title: "...", body: "..." }
+```
+
+MongoDB (embed mode):
+
+```javascript
+// users collection (posts embedded)
+{
+  _id: "...",
+  email: "alice@example.com",
+  posts: [
+    { _id: "...", title: "...", body: "..." }
+  ]
+}
+```
+
+## Customizing the mapping
+
+Export the generated plan:
+
+```bash
+npx dbdock migrate "$SRC" "$DST" --export-config ./migration.json
+```
+
+Edit the file — change column types, rename fields, flag embeds, skip collections. Then run with the custom config:
+
+```bash
+npx dbdock migrate "$SRC" "$DST" --config ./migration.json
+```
+
+Commit the config file to git so your team uses the same mapping.

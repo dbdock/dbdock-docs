@@ -1,0 +1,138 @@
+---
+title: 'Encryption key rotation'
+description: 'Safely rotate DBdock encryption keys without losing access to old backups.'
+---
+
+Encryption keys should rotate periodically — annually is a common cadence, more often if a key was potentially exposed. This guide walks through the rotation procedure.
+
+## Why rotate
+
+- **Defense in depth** — if a key is compromised in the future, only post-rotation data is affected
+- **Compliance** — SOC 2 and similar frameworks expect periodic key rotation
+- **Departing team members** — if someone with key access leaves, rotate
+
+## Important: losing access vs. rotation
+
+<Warning>
+**Rotating a key does NOT automatically re-encrypt old backups.** Old backups were encrypted with the old key and remain decryptable only with the old key. Rotation means the *new* key is used going forward.
+
+If you want all backups to use the new key, you must re-encrypt them (see "Full re-encryption" below).
+</Warning>
+
+## Procedure — forward-only rotation
+
+Easiest and safest. Old backups keep their old key; new backups use the new key.
+
+<Steps>
+  <Step title="Generate the new key">
+    ```bash
+    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+    ```
+
+    Save the output somewhere secure (password manager, cloud KMS).
+  </Step>
+  <Step title="Record where the old key was">
+    Before you change anything, note down the old key and which backups it decrypts. You'll need it to restore any backup encrypted with it.
+
+    **Do not discard the old key.** Move it to a secure archive — labelled with the date range it was active — not the trash.
+  </Step>
+  <Step title="Update the environment">
+    ```bash
+    DBDOCK_ENCRYPTION_SECRET=<new-key>
+    ```
+
+    If running in CI/CD or a secret manager, rotate it there.
+  </Step>
+  <Step title="Restart any long-lived DBdock processes">
+    They cache the env at startup. `pm2 restart`, `kubectl rollout restart`, etc.
+  </Step>
+  <Step title="Verify">
+    Run a backup and a restore of that fresh backup:
+    ```bash
+    npx dbdock backup
+    npx dbdock restore   # pick the one you just made
+    ```
+
+    If both succeed, the new key is live.
+  </Step>
+</Steps>
+
+## Full re-encryption
+
+If you want every backup to use the new key, do this after the forward-only rotation:
+
+<Steps>
+  <Step title="Set up a restore environment">
+    Point DBdock at the **old** key temporarily, on a machine that can reach both the old backup storage and new backup storage.
+  </Step>
+  <Step title="For each old backup">
+    - Restore the backup to a temporary database
+    - Switch DBdock to the new key
+    - Run `dbdock backup` against the temporary database
+    - Verify the new backup restores cleanly
+    - Drop the temporary database
+    - Delete the old backup
+  </Step>
+  <Step title="Verify coverage">
+    ```bash
+    npx dbdock list --days 365
+    ```
+
+    All backups should show a timestamp after your rotation date.
+  </Step>
+</Steps>
+
+This is labour-intensive for large backup sets. For most teams, forward-only rotation + keeping the old key archived is sufficient.
+
+## Restoring a backup encrypted with an old key
+
+Temporarily swap the env variable:
+
+```bash
+DBDOCK_ENCRYPTION_SECRET=<old-key> npx dbdock restore
+```
+
+Pick the old backup and let it run. Put the new key back when done.
+
+## Multi-key scenarios
+
+DBdock reads a single encryption key at a time. If you need truly multi-key support (e.g., different keys per environment, automatic failover), consider wrapping DBdock in your own script that sets the correct key based on metadata.
+
+## Storing keys safely
+
+<CardGroup cols={2}>
+  <Card title="Password manager" icon="vault">
+    1Password, Bitwarden, etc. Good for personal use and small teams.
+  </Card>
+  <Card title="Cloud KMS" icon="cloud">
+    AWS KMS, GCP KMS, Azure Key Vault. Best for production — audit logs, rotation, IAM.
+  </Card>
+  <Card title="HashiCorp Vault" icon="key">
+    Self-hosted, full-featured. Worth it if you're already running it.
+  </Card>
+  <Card title="Encrypted git repo" icon="git">
+    Using `git-crypt` or SOPS. OK for small teams with good ops hygiene.
+  </Card>
+</CardGroup>
+
+## Checklist
+
+When rotating:
+
+- [ ] New key generated and saved in secure storage
+- [ ] Old key archived (not deleted) with its active date range
+- [ ] Env updated in all environments (prod, staging, CI)
+- [ ] Long-lived DBdock processes restarted
+- [ ] Smoke test passed (backup + restore with new key)
+- [ ] Team notified of the rotation date (for audit purposes)
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="lock" href="/core/security">
+    Overall security best practices.
+  </Card>
+  <Card title="Production checklist" icon="list-check" href="/guides/production-checklist">
+    Full deployment checklist.
+  </Card>
+</CardGroup>

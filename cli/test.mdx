@@ -1,0 +1,93 @@
+---
+title: 'dbdock test'
+description: 'Validate your database, storage, and alert configuration.'
+---
+
+```bash
+npx dbdock test
+```
+
+Runs connectivity and configuration checks without creating a backup. Always run this after `dbdock init`, after changing credentials, or before relying on DBdock in production.
+
+## What it checks
+
+<CardGroup cols={2}>
+  <Card title="Database" icon="database">
+    Connects to Postgres, runs a test query, verifies `pg_dump` availability.
+  </Card>
+  <Card title="Storage" icon="cloud">
+    Authenticates with the storage provider and attempts a list + upload of a tiny test object.
+  </Card>
+  <Card title="Encryption" icon="lock">
+    Validates `DBDOCK_ENCRYPTION_SECRET` exists and is a valid 64-char hex key (if encryption is enabled).
+  </Card>
+  <Card title="Alerts" icon="bell">
+    Sends a test notification to configured Slack/email channels (if enabled).
+  </Card>
+</CardGroup>
+
+## Sample output
+
+```
+Running DBdock self-test...
+
+✓ Database connection
+  postgres@localhost:5432/myapp — 127ms
+
+✓ pg_dump available
+  pg_dump 16.2 (Homebrew)
+
+✓ Storage: AWS S3
+  Bucket: my-backups (us-east-1)
+  List: OK
+  Upload: OK
+  Delete test object: OK
+
+✓ Encryption
+  Secret: 64-char hex key ✓
+  Iterations: 100,000
+
+✓ Alerts
+  Slack: webhook reachable ✓
+  Email: SMTP auth OK ✓
+
+All checks passed — DBdock is ready to go.
+```
+
+## When a check fails
+
+Failed checks tell you exactly what to fix:
+
+```
+✗ Database connection
+  Error: password authentication failed for user "postgres"
+
+  Check:
+    • DBDOCK_DB_PASSWORD is set in .env
+    • DBDOCK_DB_URL is correct (if using URL mode)
+    • Your Postgres server is running and reachable
+```
+
+Exit code is `1` on any failure — safe to use in CI as a preflight.
+
+## Use in CI
+
+Add a preflight step to your pipeline:
+
+```yaml
+- name: DBdock preflight
+  run: npx dbdock test
+  env:
+    DBDOCK_DB_URL: ${{ secrets.DATABASE_URL }}
+    DBDOCK_STORAGE_ACCESS_KEY: ${{ secrets.AWS_KEY }}
+    DBDOCK_STORAGE_SECRET_KEY: ${{ secrets.AWS_SECRET }}
+    DBDOCK_ENCRYPTION_SECRET: ${{ secrets.DBDOCK_KEY }}
+```
+
+If anything is misconfigured, the deploy fails fast instead of silently producing broken backups.
+
+## See also
+
+<Card title="Troubleshooting" icon="wrench" href="/help/troubleshooting">
+  What to do when a check fails.
+</Card>

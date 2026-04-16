@@ -1,0 +1,101 @@
+---
+title: 'dbdock cleanup'
+description: 'Apply your retention policy to remove old backups.'
+---
+
+```bash
+npx dbdock cleanup [options]
+```
+
+`cleanup` applies the `retention` policy from `dbdock.config.json`. It's automatic (when `runAfterBackup: true`) and manual (via this command).
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--dry-run` | Preview what would be deleted without deleting |
+| `--force` | Skip the confirmation prompt |
+
+## Interactive preview (default)
+
+```bash
+npx dbdock cleanup
+```
+
+```
+Retention policy:
+  • maxBackups: 100
+  • maxAgeDays: 30
+  • minBackups: 5
+
+Analyzing backups...
+
+Will delete 12 backup(s), reclaiming 542.1 MB:
+  • backup-2025-10-01-... (45.2 MB) — 197 days old
+  • backup-2025-10-02-... (45.1 MB) — 196 days old
+  ...
+
+? Proceed? (y/N)
+```
+
+## Dry run
+
+See what would happen without doing it:
+
+```bash
+npx dbdock cleanup --dry-run
+```
+
+Exits with code `0` if there's nothing to delete, so it's safe in CI.
+
+## Force (no prompt)
+
+For automated cleanup in cron jobs:
+
+```bash
+npx dbdock cleanup --force
+```
+
+Combined with cron:
+
+```
+0 3 * * 0  npx dbdock cleanup --force  # Weekly on Sunday at 3am
+```
+
+## Retention policy
+
+Defined in `dbdock.config.json`:
+
+```json
+{
+  "backup": {
+    "retention": {
+      "enabled": true,
+      "maxBackups": 100,
+      "maxAgeDays": 30,
+      "minBackups": 5,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `maxBackups` | Keep at most N backups. Oldest deleted first. |
+| `maxAgeDays` | Delete anything older than N days. |
+| `minBackups` | **Safety net** — never delete below this count, even if other rules say so. |
+| `runAfterBackup` | Run cleanup automatically after each `dbdock backup`. |
+
+### How the rules combine
+
+1. Start with all backups
+2. Sort by age, newest first
+3. The most recent `minBackups` are untouchable
+4. Of the rest, delete anything exceeding `maxBackups` or older than `maxAgeDays`
+
+`minBackups` always wins. If you have 3 backups and `minBackups: 5`, cleanup deletes nothing.
+
+## Strategies
+
+See [Retention strategies](/guides/retention-strategies) for common policies (daily/weekly/monthly rotations, archival rules, etc.).

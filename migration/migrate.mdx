@@ -1,0 +1,147 @@
+---
+title: 'dbdock migrate'
+description: 'Migrate data between MongoDB and PostgreSQL in either direction.'
+---
+
+```bash
+npx dbdock migrate <source-url> <target-url> [options]
+```
+
+`migrate` is the main cross-database migration command. DBdock analyzes the source, generates a schema mapping, shows it to you, and waits for confirmation before touching anything.
+
+<Note>
+Run [`dbdock analyze`](/migration/analyze) on the source first. It's read-only and tells you what you're about to migrate.
+</Note>
+
+## Examples
+
+### MongoDB → PostgreSQL
+
+```bash
+npx dbdock migrate \
+  "mongodb://localhost:27017/myapp" \
+  "postgresql://user:pass@localhost:5432/myapp"
+```
+
+### PostgreSQL → MongoDB
+
+```bash
+npx dbdock migrate \
+  "postgresql://user:pass@localhost:5432/myapp" \
+  "mongodb://localhost:27017/myapp"
+```
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--dry-run` | Run against a temporary schema/collection prefix for validation |
+| `--incremental` | Only migrate new/changed data (needs `--since`) |
+| `--since <date>` | Cutoff date for incremental (ISO format) |
+| `--config <path>` | Use a saved migration config file |
+| `--export-config <path>` | Export the generated plan to a config file |
+| `--batch-size <number>` | Documents per batch (default `1000`) |
+| `--max-depth <number>` | Max nesting depth before jsonb (default `2`) |
+
+## The confirmation flow
+
+```
+Analyzing source...
+  Collections: 4
+  Documents:   65,360
+  Size:        142.8 MB
+
+Generating schema mapping...
+
+Proposed mapping:
+  users      (12,450 docs)  →  public.users      (8 columns)
+  orders     (48,910 docs)  →  public.orders     (12 columns + 2 fk)
+  products   (820 docs)     →  public.products   (14 columns)
+  reviews    (3,180 docs)   →  public.reviews    (6 columns + 1 fk)
+
+Estimated duration: 3-5 minutes
+
+? Proceed with migration? (y/N)
+```
+
+## What happens under the hood
+
+<Steps>
+  <Step title="Connect to both databases">
+    Validates credentials and reachability.
+  </Step>
+  <Step title="Analyze source">
+    Same logic as `dbdock analyze` — types, nesting, inconsistencies.
+  </Step>
+  <Step title="Generate mapping">
+    Proposes target schema based on source shape and `--max-depth`.
+  </Step>
+  <Step title="Detect references">
+    Scans for fields that look like references between collections/tables.
+  </Step>
+  <Step title="Show plan and wait">
+    Nothing is written yet. You see the full plan and confirm.
+  </Step>
+  <Step title="Create target schema">
+    Creates tables/collections. Idempotent — skips existing ones.
+  </Step>
+  <Step title="Migrate in batches">
+    Streams data in configurable batches. Progress bar shows rate and ETA.
+  </Step>
+  <Step title="Collect errors">
+    Failed rows go to `_migration_errors` with the error message.
+  </Step>
+  <Step title="Report">
+    Summary: rows migrated, rows failed, duration.
+  </Step>
+</Steps>
+
+## Reusing a mapping
+
+Generate and save the plan once:
+
+```bash
+npx dbdock migrate "$MONGO" "$PG" --export-config ./my-migration.json
+```
+
+Edit the file to customize the schema. Then:
+
+```bash
+npx dbdock migrate "$MONGO" "$PG" --config ./my-migration.json
+```
+
+Useful when you want the same migration to run in CI or against multiple environments.
+
+## Tuning
+
+### Large collections
+
+If a collection has millions of documents, lower the batch size to reduce memory and increase the commit frequency:
+
+```bash
+npx dbdock migrate "$MONGO" "$PG" --batch-size 500
+```
+
+### Deeply nested documents
+
+If your documents have complex nesting you don't want flattened, increase `--max-depth` — but past depth 2 or 3, you're usually better off with `jsonb`:
+
+```bash
+npx dbdock migrate "$MONGO" "$PG" --max-depth 1
+```
+
+Anything beyond depth 1 stays as `jsonb` — usually the right default.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Dry runs" icon="vials" href="/migration/dry-run">
+    Validate before committing.
+  </Card>
+  <Card title="Schema mapping" icon="diagram-project" href="/migration/schema-mapping">
+    Type conversion details.
+  </Card>
+  <Card title="Incremental" icon="arrow-rotate-right" href="/migration/incremental">
+    Pull only new/changed data.
+  </Card>
+</CardGroup>

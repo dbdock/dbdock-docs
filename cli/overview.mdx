@@ -1,0 +1,89 @@
+---
+title: 'CLI overview'
+description: 'Every DBdock command at a glance.'
+---
+
+DBdock ships a single CLI binary — `dbdock` — with commands for setup, backup, restore, migration, and management. Every command is documented on its own page with options, examples, and gotchas.
+
+## Command index
+
+### Setup
+
+<CardGroup cols={2}>
+  <Card title="dbdock init" icon="play" href="/cli/init">
+    Interactive setup wizard. Run once per project.
+  </Card>
+  <Card title="dbdock migrate-config" icon="shield" href="/cli/migrate-config">
+    Move legacy secrets from config file to environment.
+  </Card>
+</CardGroup>
+
+### Backup lifecycle
+
+<CardGroup cols={2}>
+  <Card title="dbdock backup" icon="download" href="/cli/backup">
+    Create a backup with encryption and compression.
+  </Card>
+  <Card title="dbdock restore" icon="upload" href="/cli/restore">
+    Interactive restore with smart filtering.
+  </Card>
+  <Card title="dbdock list" icon="list" href="/cli/list">
+    List all backups with filtering.
+  </Card>
+  <Card title="dbdock delete" icon="trash" href="/cli/delete">
+    Delete specific backups or all of them.
+  </Card>
+  <Card title="dbdock cleanup" icon="broom" href="/cli/cleanup">
+    Apply the retention policy.
+  </Card>
+</CardGroup>
+
+### Direct database operations
+
+<CardGroup cols={2}>
+  <Card title="dbdock copydb" icon="copy" href="/cli/copydb">
+    Copy a PostgreSQL database directly between two URLs.
+  </Card>
+  <Card title="Cross-DB migration" icon="arrows-left-right" href="/migration/overview">
+    MongoDB ↔ PostgreSQL (see Migration section).
+  </Card>
+</CardGroup>
+
+### Diagnostics & schedules
+
+<CardGroup cols={2}>
+  <Card title="dbdock test" icon="stethoscope" href="/cli/test">
+    Verify DB, storage, and alert config.
+  </Card>
+  <Card title="dbdock status" icon="chart-line" href="/cli/status">
+    View schedules and service health.
+  </Card>
+  <Card title="dbdock schedule" icon="clock" href="/cli/schedule">
+    Manage cron schedules.
+  </Card>
+</CardGroup>
+
+## Global flags
+
+Every command supports:
+
+| Flag | Description |
+|---|---|
+| `--help`, `-h` | Show command help |
+| `--version`, `-V` | Print DBdock version |
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Success |
+| `1` | General error |
+| `130` | Interrupted (Ctrl+C or SIGINT) |
+
+Commands that perform destructive actions always confirm interactively unless you pass `--force` (where supported).
+
+## Getting help
+
+- `dbdock <command> --help` — command-specific help
+- [Troubleshooting](/help/troubleshooting) — common issues
+- [GitHub Discussions](https://github.com/dbdock/dbdock/discussions) — ask the community

@@ -1,0 +1,98 @@
+---
+title: 'Dry runs & validation'
+description: 'Validate a migration plan against a temporary schema before committing.'
+---
+
+`--dry-run` runs the full migration into a temporary schema (or collection prefix) so you can inspect the result before touching production. Nothing is written to your real target.
+
+## Basic usage
+
+```bash
+npx dbdock migrate "$SRC" "$DST" --dry-run
+```
+
+## What changes in dry-run mode
+
+### MongoDB → PostgreSQL
+
+A dry run creates a schema named `dbdock_dryrun_<timestamp>` and migrates into tables there:
+
+```
+source: mongodb://.../myapp
+target: postgresql://.../myapp.dbdock_dryrun_20260416_080000.users
+                                  dbdock_dryrun_20260416_080000.orders
+                                  ...
+```
+
+Query those tables to verify the mapping. When you're satisfied, drop the schema:
+
+```sql
+DROP SCHEMA dbdock_dryrun_20260416_080000 CASCADE;
+```
+
+### PostgreSQL → MongoDB
+
+A dry run creates collections prefixed with `dbdock_dryrun_<timestamp>_`:
+
+```
+dbdock_dryrun_20260416_080000_users
+dbdock_dryrun_20260416_080000_orders
+```
+
+Drop them when done:
+
+```javascript
+db.getCollectionNames()
+  .filter(n => n.startsWith('dbdock_dryrun_'))
+  .forEach(n => db[n].drop())
+```
+
+## What to check in a dry run
+
+<CardGroup cols={2}>
+  <Card title="Row counts" icon="list-ol">
+    Verify every document/row made it: `SELECT count(*) FROM dryrun.users;` vs. the source count.
+  </Card>
+  <Card title="Type fidelity" icon="check">
+    Spot-check sample rows. Dates, nulls, and numbers are the most common sources of trouble.
+  </Card>
+  <Card title="Error table" icon="triangle-exclamation">
+    Look at `_migration_errors` — any skipped rows?
+  </Card>
+  <Card title="Query performance" icon="bolt">
+    Run your most important queries against the dry-run schema to confirm the indexes are right.
+  </Card>
+</CardGroup>
+
+## Size of the dry run
+
+Dry runs migrate the full dataset by default, which is ideal for validation but slow on huge databases. To speed things up, use `--batch-size` and run against a reduced source if possible.
+
+DBdock doesn't have a `--sample` flag yet — open an issue on [GitHub](https://github.com/dbdock/dbdock/issues) if you need one.
+
+## Production checklist after a successful dry run
+
+Before running the real migration:
+
+1. ✅ Row counts match
+2. ✅ Indexes created match expectations
+3. ✅ Sample queries return correct results
+4. ✅ Error table is empty (or errors are acceptable)
+5. ✅ Target database has enough disk space
+6. ✅ Team is informed (migrations can lock tables briefly)
+7. ✅ You have a rollback plan (usually: drop the target schema)
+
+## Cleaning up dry-run artifacts
+
+DBdock doesn't auto-drop dry-run schemas so you can inspect them. Drop them manually once done to reclaim space.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock migrate" icon="arrows-left-right" href="/migration/migrate">
+    Run the real migration.
+  </Card>
+  <Card title="Incremental" icon="arrow-rotate-right" href="/migration/incremental">
+    Pull only new/changed rows.
+  </Card>
+</CardGroup>

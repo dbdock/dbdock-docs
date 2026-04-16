@@ -1,0 +1,90 @@
+---
+title: 'Changelog'
+description: "What's new in each DBdock release."
+---
+
+Full changelog lives in the repository: [dbdock/dbdock CHANGELOG.md](https://github.com/dbdock/dbdock/blob/main/CHANGELOG.md).
+
+Below is a high-level summary of notable releases.
+
+## 1.1.26 — Latest
+
+- `--driver` flag on `copydb` for serverless Postgres compatibility (Neon, Supabase pooler, PlanetScale Postgres)
+- Stricter TypeScript types across the codebase
+- Re-enabled `@typescript-eslint/no-explicit-any` — the codebase is now `any`-free
+- Open-source release: moved to `github.com/dbdock/dbdock`, added CONTRIBUTING/SECURITY/CHANGELOG, CI workflow
+
+## 1.1.22
+
+- Replaced `uuid` with `nanoid` for backup ID generation (smaller, URL-safe)
+- SMTP configuration handling improvements with optional chaining
+
+## 1.1.17
+
+- Support for environment-only configuration — no config file needed
+- `DBDOCK_DB_URL` / `DATABASE_URL` as first-class database configuration
+
+## 1.1.15
+
+- `copydb` command for direct database-to-database copies
+
+## 1.1.11
+
+- Custom webhook support
+- Improved environment variable handling
+
+## 1.1.4
+
+- Migration tool for moving legacy secrets from config to env (`dbdock migrate-config`)
+- Credential masking in logs
+
+## 1.0.0
+
+- First stable release
+- PostgreSQL backup and restore
+- Storage adapters: local, S3, R2, Cloudinary
+- AES-256-GCM encryption, zstd compression
+- Retention policies
+- Email and Slack alerts
+- Cron-based scheduling
+- Programmatic SDK
+
+## Release notes on GitHub
+
+Each release has detailed notes and the diff since the previous version on GitHub:
+
+[github.com/dbdock/dbdock/releases](https://github.com/dbdock/dbdock/releases)
+
+## Upgrading
+
+DBdock follows [semver](https://semver.org). Patch and minor updates are backwards-compatible.
+
+### Check your version
+
+```bash
+dbdock --version
+```
+
+### Update global install
+
+```bash
+npm update -g dbdock
+```
+
+### Update project dependency
+
+```bash
+npm update dbdock
+```
+
+Or pin to a specific version:
+
+```bash
+npm install dbdock@1.1.26
+```
+
+## Breaking changes
+
+None to date — every 1.x release is backwards-compatible with 1.0.
+
+If a 2.0 release arrives with breaking changes, this page will document the migration path.

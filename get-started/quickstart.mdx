@@ -1,0 +1,120 @@
+---
+title: 'Quickstart'
+description: 'Go from zero to your first backup in under 5 minutes.'
+---
+
+This guide takes you through setup, your first backup, and your first restore. Total time: about 5 minutes.
+
+<Note>
+Haven't installed DBdock yet? See the [installation guide](/get-started/installation).
+</Note>
+
+## 1. Initialize
+
+Run `init` once in your project directory. It walks you through everything interactively.
+
+```bash
+npx dbdock init
+```
+
+It will ask for:
+
+- Database connection (host, port, user, database name)
+- Storage provider (local disk, S3, R2, or Cloudinary)
+- Encryption (recommended for cloud storage)
+- Alerts (optional — Slack and email)
+
+<Tip>
+**Security-first by default.** Non-sensitive config goes to `dbdock.config.json` (safe for git). Secrets go to `.env`, and `.gitignore` is updated automatically.
+</Tip>
+
+## 2. Create your first backup
+
+```bash
+npx dbdock backup
+```
+
+You'll see real-time progress:
+
+```
+████████████████████ | 100% | 45.23/100 MB | Speed: 12.50 MB/s | ETA: 0s | Uploading to S3
+✔ Backup completed successfully
+```
+
+The backup is encrypted (if enabled), compressed, and streamed directly to your configured storage.
+
+## 3. Restore a backup
+
+```bash
+npx dbdock restore
+```
+
+DBdock shows a list of backups and lets you pick one:
+
+```
+Progress:
+────────────────────────────────────────────────────────
+  ✔ Downloading backup
+  ✔ Decrypting data
+  ✔ Decompressing data
+  ⟳ Restoring to database...
+────────────────────────────────────────────────────────
+✔ All steps completed in 8.42s
+```
+
+<Tip>
+You can also restore into a **different** database. Pick "New Database Instance (Migrate)" when prompted and provide the target connection details — great for refreshing staging from production.
+</Tip>
+
+## 4. Verify everything works
+
+Before trusting DBdock in production, run the self-test:
+
+```bash
+npx dbdock test
+```
+
+This checks:
+
+- Database connection
+- Storage provider access
+- Alert configuration (if enabled)
+
+## Environment-only setup (no config file)
+
+Prefer not to commit a config file? Run DBdock entirely from environment variables:
+
+```bash
+# .env
+DBDOCK_DB_URL=postgresql://user:password@host:5432/database
+STORAGE_PROVIDER=s3
+STORAGE_BUCKET=my-backups
+DBDOCK_STORAGE_ACCESS_KEY=your-key
+DBDOCK_STORAGE_SECRET_KEY=your-secret
+DBDOCK_ENCRYPTION_SECRET=your-64-char-hex-key
+```
+
+Then:
+
+```bash
+npx dbdock backup
+```
+
+See the [configuration reference](/core/configuration) for all available variables.
+
+## What to do next
+
+<CardGroup cols={2}>
+  <Card title="Explore commands" icon="terminal" href="/cli/overview">
+    Every command, every flag, with examples.
+  </Card>
+  <Card title="Choose storage" icon="cloud" href="/storage/overview">
+    S3, R2, Cloudinary, or local disk.
+  </Card>
+  <Card title="Set up alerts" icon="bell" href="/alerts/overview">
+    Slack, email, or custom webhooks.
+  </Card>
+  <Card title="Schedule backups" icon="clock" href="/alerts/scheduling">
+    Automated cron-based backups.
+  </Card>
+</CardGroup>

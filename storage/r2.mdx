@@ -1,0 +1,127 @@
+---
+title: 'Cloudflare R2'
+description: 'S3-compatible storage with zero egress fees.'
+---
+
+Cloudflare R2 is S3-compatible object storage with **no egress fees** — ideal when you restore backups frequently or pull them to different regions.
+
+## Configuration
+
+### `dbdock.config.json`
+
+```json
+{
+  "storage": {
+    "provider": "r2",
+    "s3": {
+      "bucket": "my-dbdock-backups",
+      "region": "auto",
+      "endpoint": "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+    }
+  }
+}
+```
+
+Find your `ACCOUNT_ID` in the Cloudflare dashboard → R2 sidebar. The region is always `auto` for R2.
+
+### `.env`
+
+```bash
+DBDOCK_STORAGE_ACCESS_KEY=your-r2-access-key-id
+DBDOCK_STORAGE_SECRET_KEY=your-r2-secret-access-key
+```
+
+## Bucket setup
+
+<Steps>
+  <Step title="Create an R2 bucket">
+    Cloudflare dashboard → R2 → Create bucket. Pick a name and location hint.
+  </Step>
+  <Step title="Create an API token">
+    Cloudflare dashboard → R2 → Manage API Tokens → Create API Token.
+
+    Permissions needed: **Object Read & Write**. Scope to the specific bucket.
+
+    Copy the **Access Key ID** and **Secret Access Key** — they're shown once.
+  </Step>
+  <Step title="Get your account ID">
+    The endpoint format requires your account ID:
+    `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+
+    Find the account ID on the right sidebar of any Cloudflare dashboard page.
+  </Step>
+  <Step title="Test">
+    ```bash
+    npx dbdock test
+    ```
+  </Step>
+</Steps>
+
+## Why R2 over S3
+
+<CardGroup cols={2}>
+  <Card title="Zero egress fees" icon="dollar-sign">
+    Downloads cost nothing. S3 charges $0.09/GB.
+  </Card>
+  <Card title="S3-compatible API" icon="code">
+    Same client, same tools — no lock-in.
+  </Card>
+  <Card title="Global latency" icon="globe">
+    Cloudflare's global network caches R2.
+  </Card>
+  <Card title="Predictable pricing" icon="chart-simple">
+    Storage $0.015/GB/month + operations. No surprise bills.
+  </Card>
+</CardGroup>
+
+## When to pick R2 vs S3
+
+| Pick R2 if... | Pick S3 if... |
+|---|---|
+| You restore backups often | You never pull backups out of AWS |
+| You serve backups to multiple regions | Your compute is already in AWS |
+| Cost predictability matters | You need deep AWS integration (KMS, Glacier, IAM roles) |
+| You're already using Cloudflare | You're already using AWS |
+
+## Public URLs
+
+R2 supports public buckets via custom domains (`backups.example.com`). DBdock does **not** use this — backups are private and accessed with signed credentials. Keep your R2 bucket private.
+
+## Common errors
+
+<AccordionGroup>
+  <Accordion title="NoSuchBucket">
+    - Bucket name is misspelled
+    - Account ID in endpoint is wrong
+  </Accordion>
+  <Accordion title="Forbidden (403)">
+    - API token doesn't have Object Read & Write
+    - Token is scoped to a different bucket
+  </Accordion>
+  <Accordion title="Invalid endpoint">
+    - Endpoint must be `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` (not `https://pub-<hash>.r2.dev`)
+    - No trailing slash
+  </Accordion>
+</AccordionGroup>
+
+## Cost comparison
+
+Example: 100 MB daily backup, 30-day retention, 3 restores/month (300 MB egress):
+
+| Provider | Storage | Requests | Egress | Total |
+|---|---|---|---|---|
+| **R2** | $0.045 | ~$0.01 | **$0.00** | **~$0.06/mo** |
+| **S3 Standard** | $0.069 | ~$0.01 | $0.027 | ~$0.11/mo |
+
+Small numbers individually, but over many databases and many months the egress difference matters.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    The incumbent, more features.
+  </Card>
+  <Card title="Cloudinary" icon="image" href="/storage/cloudinary">
+    Another option with a generous free tier.
+  </Card>
+</CardGroup>

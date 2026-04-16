@@ -1,0 +1,90 @@
+---
+title: 'dbdock schedule'
+description: 'Manage backup schedules stored in your config file.'
+---
+
+```bash
+dbdock schedule
+```
+
+`schedule` is an interactive menu for adding, editing, and removing cron schedules. Schedules are stored in `dbdock.config.json`.
+
+<Note>
+**The CLI manages config — it doesn't run schedules.** To actually execute scheduled backups, you need to either run DBdock as a long-lived process (see [scheduling guide](/alerts/scheduling)) or use an external scheduler like system cron.
+</Note>
+
+## Interactive menu
+
+```
+? What do you want to do?
+  ❯ Add a schedule
+    List schedules
+    Enable/disable a schedule
+    Delete a schedule
+    Exit
+```
+
+## Presets
+
+When adding a schedule, DBdock offers common presets:
+
+| Preset | Cron | Description |
+|---|---|---|
+| Hourly | `0 * * * *` | Every hour on the hour |
+| Daily (midnight) | `0 0 * * *` | 00:00 every day |
+| Daily (2 AM) | `0 2 * * *` | 02:00 every day |
+| Weekly (Sunday) | `0 0 * * 0` | 00:00 every Sunday |
+| Monthly | `0 0 1 * *` | 00:00 on the 1st of each month |
+| Custom | your cron | Any valid 5-field cron expression |
+
+## Schedule structure
+
+Schedules end up in `dbdock.config.json`:
+
+```json
+{
+  "schedules": [
+    {
+      "name": "daily-backup",
+      "cron": "0 2 * * *",
+      "enabled": true
+    },
+    {
+      "name": "weekly-archive",
+      "cron": "0 0 * * 0",
+      "enabled": false
+    }
+  ]
+}
+```
+
+## Running the schedules
+
+### Option 1 — long-lived DBdock process
+
+Use the programmatic API with `node-cron`. See [SDK → scheduling](/sdk/scheduling).
+
+### Option 2 — external cron
+
+Let system cron trigger `dbdock backup` on the schedule you want:
+
+```
+0 2 * * *  cd /app && npx dbdock backup >> /var/log/dbdock.log 2>&1
+```
+
+This bypasses `dbdock schedule` entirely and is the simplest option on a single server.
+
+### Option 3 — cloud scheduler
+
+On Kubernetes (CronJob), AWS (EventBridge → Lambda/ECS), or GCP (Cloud Scheduler), trigger `dbdock backup` on the schedule.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Scheduling guide" icon="clock" href="/alerts/scheduling">
+    Detailed guide on running scheduled backups.
+  </Card>
+  <Card title="dbdock status" icon="chart-line" href="/cli/status">
+    View configured schedules.
+  </Card>
+</CardGroup>

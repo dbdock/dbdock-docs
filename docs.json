@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Dbdock v 1.1.11",
+  "name": "DBdock",
   "logo": {
     "light": "/images/logo.png",
     "dark": "/images/logo.png"
@@ -21,20 +21,94 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting Started",
+            "group": "Get Started",
             "pages": [
               "index",
-              "quickstart",
-              "installation"
+              "get-started/installation",
+              "get-started/quickstart"
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "Core",
             "pages": [
-              "cli-commands",
-              "configuration",
-              "programmatic-usage",
-              "troubleshooting"
+              "core/concepts",
+              "core/configuration",
+              "core/security"
+            ]
+          },
+          {
+            "group": "CLI Reference",
+            "pages": [
+              "cli/overview",
+              "cli/init",
+              "cli/backup",
+              "cli/restore",
+              "cli/copydb",
+              "cli/list",
+              "cli/delete",
+              "cli/cleanup",
+              "cli/schedule",
+              "cli/status",
+              "cli/test",
+              "cli/migrate-config"
+            ]
+          },
+          {
+            "group": "Migration",
+            "pages": [
+              "migration/overview",
+              "migration/analyze",
+              "migration/migrate",
+              "migration/schema-mapping",
+              "migration/dry-run",
+              "migration/incremental"
+            ]
+          },
+          {
+            "group": "Storage Providers",
+            "pages": [
+              "storage/overview",
+              "storage/local",
+              "storage/s3",
+              "storage/r2",
+              "storage/cloudinary"
+            ]
+          },
+          {
+            "group": "Alerts & Automation",
+            "pages": [
+              "alerts/overview",
+              "alerts/scheduling",
+              "alerts/email",
+              "alerts/slack",
+              "alerts/webhooks"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/staging-refresh",
+              "guides/key-rotation",
+              "guides/retention-strategies",
+              "guides/production-checklist"
+            ]
+          },
+          {
+            "group": "SDK",
+            "pages": [
+              "sdk/overview",
+              "sdk/creating-backups",
+              "sdk/listing-backups",
+              "sdk/scheduling",
+              "sdk/alerts"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "help/troubleshooting",
+              "help/faq",
+              "help/changelog"
             ]
           }
         ]
@@ -49,7 +123,7 @@
         },
         {
           "anchor": "GitHub",
-          "href": "https://github.com/naheemolaide/dbdock-support",
+          "href": "https://github.com/dbdock/dbdock",
           "icon": "github"
         }
       ]
@@ -59,7 +133,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "https://github.com/naheemolaide/dbdock-support/issues"
+        "href": "https://github.com/dbdock/dbdock/issues"
       }
     ]
   },
@@ -77,7 +151,7 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/naheemolaide/dbdock-support"
+      "github": "https://github.com/dbdock/dbdock"
     }
   }
 }

@@ -1,0 +1,132 @@
+---
+title: 'Concepts'
+description: 'How DBdock thinks about backups, compression, encryption, and storage.'
+---
+
+This page explains the mental model behind DBdock. Reading it once will make every other page easier to follow.
+
+## Backup anatomy
+
+A DBdock backup is always one file per backup. The filename encodes when it was taken:
+
+```
+backup-YYYY-MM-DD-HH-MM-SS-BACKUPID.sql
+```
+
+Wherever the backup lives — local disk, S3, R2, or Cloudinary — it follows the same naming pattern. A parallel metadata record (size, duration, compression info, encryption info) is stored alongside it, which is how `dbdock list`, `dbdock restore`, and retention policies know what's available.
+
+## The pipeline
+
+Every backup flows through the same stages:
+
+```
+pg_dump ──▶ [compress] ──▶ [encrypt] ──▶ storage adapter ──▶ destination
+```
+
+Each stage is optional except `pg_dump` and the destination. This is why you can:
+
+- Skip compression for tiny DBs where speed matters more than size
+- Skip encryption on local-only backups if you manage the disk
+- Change storage providers without re-dumping your database
+
+Restore runs the pipeline in reverse:
+
+```
+storage adapter ──▶ [decrypt] ──▶ [decompress] ──▶ pg_restore ──▶ database
+```
+
+## Backup formats
+
+DBdock supports all four PostgreSQL formats from `pg_dump`:
+
+| Format | Extension | When to use |
+|---|---|---|
+| `custom` (default) | `.sql` | Best for most cases — binary, compressed by pg_dump, selective restore supported |
+| `plain` | `.sql` | Human-readable SQL, works with `psql` directly |
+| `directory` | `.dir` | Parallel dump/restore for very large DBs |
+| `tar` | `.tar` | Tar archive of the directory format |
+
+Set format in `dbdock.config.json`:
+
+```json
+{
+  "backup": { "format": "custom" }
+}
+```
+
+## Compression
+
+DBdock uses [zstd](https://github.com/facebook/zstd) for compression. zstd is fast and compresses roughly as well as gzip at higher levels.
+
+- **Level 0** — no compression
+- **Level 6** (default) — balanced
+- **Level 11** — maximum compression, slower
+
+Compression is applied *after* `pg_dump`, so it works regardless of backup format.
+
+## Encryption
+
+DBdock encrypts with **AES-256-GCM**. The key is derived from `DBDOCK_ENCRYPTION_SECRET` using **PBKDF2** with 100,000 iterations (configurable).
+
+- Encryption is applied *after* compression, so encrypted backups are also compressed.
+- The IV is generated fresh per backup and stored in the file header alongside the ciphertext.
+- Losing the secret = losing the ability to restore. Store it somewhere other than the backup destination.
+
+See the [Security page](/core/security) for key management guidance.
+
+## Storage adapters
+
+DBdock ships adapters for four storage backends. They all implement the same interface — `put`, `get`, `list`, `delete` — so swapping providers never requires changing how you use the CLI.
+
+<CardGroup cols={2}>
+  <Card title="Local" icon="folder" href="/storage/local">
+    Disk-based storage.
+  </Card>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    S3 and any S3-compatible object store.
+  </Card>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Zero-egress object storage.
+  </Card>
+  <Card title="Cloudinary" icon="image" href="/storage/cloudinary">
+    Media-focused storage service.
+  </Card>
+</CardGroup>
+
+## Retention
+
+Without cleanup, backups accumulate. DBdock applies a retention policy with three knobs:
+
+- `maxBackups` — cap the total count
+- `maxAgeDays` — delete backups older than N days
+- `minBackups` — *never* delete below this count, no matter what
+
+`minBackups` is the safety net — even if every other rule says "delete," DBdock will refuse to go below it. See [Retention strategies](/guides/retention-strategies) for recommended settings.
+
+## The config file
+
+`dbdock.config.json` holds non-sensitive configuration and is safe to commit. It has four top-level sections:
+
+```json
+{
+  "database":  { ... },
+  "storage":   { ... },
+  "backup":    { ... },
+  "alerts":    { ... }
+}
+```
+
+Secrets (passwords, keys, webhooks) never go in the config file — they live in environment variables. See the [Configuration reference](/core/configuration) for every available option.
+
+## Programmatic use
+
+Everything the CLI does, you can do from code. DBdock exports a small NestJS-based module that exposes `BackupService`, `StorageService`, and `CryptoService`:
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+const dbdock = await createDBDock();
+const backups = dbdock.get(BackupService);
+await backups.createBackup({ compress: true, encrypt: true });
+```
+
+See the [SDK overview](/sdk/overview) for the full API surface.

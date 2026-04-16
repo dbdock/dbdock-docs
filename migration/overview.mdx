@@ -1,0 +1,113 @@
+---
+title: 'Migration overview'
+description: 'Cross-database migration between MongoDB and PostgreSQL.'
+---
+
+DBdock can move data between **MongoDB and PostgreSQL** in either direction. It's designed for the case where you've outgrown MongoDB and want to land on Postgres (or vice versa) — not as a live replication tool.
+
+## What gets migrated
+
+<CardGroup cols={2}>
+  <Card title="Schema" icon="table">
+    MongoDB collections → Postgres tables (or the reverse). Field types inferred from the source.
+  </Card>
+  <Card title="Data" icon="database">
+    Every document/row streamed in configurable batches.
+  </Card>
+  <Card title="References" icon="link">
+    Best-effort detection of relationships to set up foreign keys.
+  </Card>
+  <Card title="Errors" icon="triangle-exclamation">
+    Failed rows are collected in a `_migration_errors` table/collection for review.
+  </Card>
+</CardGroup>
+
+## Workflow
+
+<Steps>
+  <Step title="Analyze the source">
+    Scan the source database to understand shape, types, and reference patterns.
+
+    ```bash
+    npx dbdock analyze "mongodb://localhost:27017/myapp"
+    ```
+
+    See [dbdock analyze](/migration/analyze).
+  </Step>
+  <Step title="Plan the migration">
+    DBdock generates a schema mapping proposal you can review and customize.
+
+    See [Schema mapping](/migration/schema-mapping).
+  </Step>
+  <Step title="Dry run">
+    Validate the mapping against a temporary schema — no production writes.
+
+    ```bash
+    npx dbdock migrate "$MONGO_URL" "$POSTGRES_URL" --dry-run
+    ```
+
+    See [Dry runs](/migration/dry-run).
+  </Step>
+  <Step title="Run the migration">
+    Execute against the real target with your confirmation.
+
+    ```bash
+    npx dbdock migrate "$MONGO_URL" "$POSTGRES_URL"
+    ```
+
+    See [dbdock migrate](/migration/migrate).
+  </Step>
+  <Step title="Keep things in sync (optional)">
+    Run incremental migrations to pull only new/changed data.
+
+    ```bash
+    npx dbdock migrate "$MONGO_URL" "$POSTGRES_URL" --incremental --since 2026-04-01
+    ```
+
+    See [Incremental migration](/migration/incremental).
+  </Step>
+</Steps>
+
+## Directions
+
+### MongoDB → PostgreSQL
+
+The most common direction. DBdock:
+
+- Flattens nested documents up to a configurable depth (default: 2 levels)
+- Stores deeper nesting as `jsonb` columns
+- Infers column types from observed values
+- Creates indexes for commonly-queried fields
+
+### PostgreSQL → MongoDB
+
+Also supported. DBdock:
+
+- Maps tables to collections
+- Converts rows to documents, preserving column types
+- Optionally embeds related rows (one-to-many) into parent documents
+- Translates Postgres JSON/JSONB columns to native MongoDB documents
+
+## Core principles
+
+1. **Nothing runs without confirmation.** Every migration shows you the plan and waits for you to approve it.
+2. **Errors don't halt the migration.** Failed rows go to `_migration_errors` so you can address them post-hoc without redoing the whole thing.
+3. **Idempotent where possible.** Re-running a migration with the same config reuses existing tables rather than duplicating.
+4. **You own the schema.** The generated mapping is a *proposal* — save it, edit it, commit it.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock analyze" icon="magnifying-glass" href="/migration/analyze">
+    Understand the source first.
+  </Card>
+  <Card title="dbdock migrate" icon="arrows-left-right" href="/migration/migrate">
+    The migration command itself.
+  </Card>
+  <Card title="Schema mapping" icon="diagram-project" href="/migration/schema-mapping">
+    How MongoDB types become Postgres types.
+  </Card>
+  <Card title="Dry runs" icon="vials" href="/migration/dry-run">
+    Validate without touching production.
+  </Card>
+</CardGroup>

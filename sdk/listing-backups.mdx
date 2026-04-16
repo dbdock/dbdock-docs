@@ -1,0 +1,125 @@
+---
+title: 'Listing backups'
+description: 'Query backup history programmatically.'
+---
+
+## List all backups
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+async function listAll() {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  const list = await backups.listBackups();
+
+  for (const backup of list) {
+    console.log(`${backup.id} (${backup.formattedSize}, ${backup.startTime})`);
+  }
+}
+```
+
+`listBackups()` returns all backups from the configured storage provider, sorted newest first.
+
+## Shape of each entry
+
+```typescript
+interface BackupSummary {
+  id: string;
+  storageKey: string;
+  database: string;
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+  size: number;
+  compressedSize: number;
+  formattedSize: string;
+  encrypted: boolean;
+  compressed: boolean;
+  format: 'custom' | 'plain' | 'directory' | 'tar';
+}
+```
+
+## Get metadata for one backup
+
+```javascript
+const metadata = await backups.getBackupMetadata('backup-2026-04-16-08-00-00-abc123');
+
+if (!metadata) {
+  console.log('Backup not found');
+} else {
+  console.log('Size:', metadata.formattedSize);
+  console.log('Encrypted:', metadata.encryption?.enabled);
+}
+```
+
+Returns `null` if the backup doesn't exist.
+
+## Filtering
+
+`listBackups()` returns everything. Filter in JavaScript:
+
+```javascript
+const all = await backups.listBackups();
+
+// Last 7 days
+const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+const recent = all.filter(b => b.startTime > weekAgo);
+
+// Only encrypted
+const encrypted = all.filter(b => b.encrypted);
+
+// Search by substring in ID
+const preDeploy = all.filter(b => b.id.includes('pre-deploy'));
+```
+
+For large backup sets, this is an in-memory filter after fetching — for thousands of backups you may want to paginate at the storage layer (future API).
+
+## Sample: find the most recent successful backup
+
+```javascript
+async function getLatest() {
+  const list = await backups.listBackups();
+  if (list.length === 0) return null;
+  return list[0]; // already sorted newest-first
+}
+```
+
+## Sample: report backup health
+
+```javascript
+async function healthReport() {
+  const list = await backups.listBackups();
+
+  if (list.length === 0) {
+    return { status: 'critical', reason: 'no backups exist' };
+  }
+
+  const latest = list[0];
+  const hoursAgo = (Date.now() - latest.startTime.getTime()) / 3_600_000;
+
+  if (hoursAgo > 30) {
+    return { status: 'critical', reason: `latest backup is ${hoursAgo.toFixed(1)}h old` };
+  }
+
+  if (list.length < 3) {
+    return { status: 'warning', reason: 'fewer than 3 backups' };
+  }
+
+  return { status: 'ok', backups: list.length, latestAgeHours: hoursAgo };
+}
+```
+
+Wire this into your app's `/health` endpoint or cron-driven monitoring.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Creating backups" icon="download" href="/sdk/creating-backups">
+    Create new backups.
+  </Card>
+  <Card title="dbdock list" icon="list" href="/cli/list">
+    CLI equivalent.
+  </Card>
+</CardGroup>

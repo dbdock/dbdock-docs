@@ -1,0 +1,67 @@
+---
+title: 'dbdock list'
+description: 'List all available backups with filtering.'
+---
+
+```bash
+npx dbdock list [options]
+```
+
+Shows backups from your configured storage provider. When you have more than 50 backups, DBdock auto-filters to keep the output readable.
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--recent <N>` | Show the N most recent backups |
+| `--search <keyword>` | Filter by keyword in backup ID |
+| `--days <N>` | Show backups from the last N days |
+| `--limit <N>` | Limit total results |
+
+## Examples
+
+### Most recent
+
+```bash
+npx dbdock list --recent 10
+```
+
+### Last week
+
+```bash
+npx dbdock list --days 7
+```
+
+### Search by keyword
+
+```bash
+npx dbdock list --search "pre-deploy"
+```
+
+Matches any backup whose ID contains "pre-deploy".
+
+### Combine filters
+
+```bash
+npx dbdock list --days 30 --limit 20
+```
+
+Last 30 days, capped at 20 results.
+
+## Output
+
+```
+┌────────────────────────────────────┬──────────┬───────────┬─────────────────────┐
+│ ID                                 │ Size     │ Encrypted │ Created             │
+├────────────────────────────────────┼──────────┼───────────┼─────────────────────┤
+│ backup-2026-04-16-08-00-00-abc123  │ 45.2 MB  │ ✓         │ 2026-04-16 08:00:00 │
+│ backup-2026-04-15-08-00-00-def456  │ 45.1 MB  │ ✓         │ 2026-04-15 08:00:00 │
+│ backup-2026-04-14-08-00-00-ghi789  │ 44.8 MB  │ ✓         │ 2026-04-14 08:00:00 │
+└────────────────────────────────────┴──────────┴───────────┴─────────────────────┘
+
+Total: 3 backup(s) — 135.1 MB
+```
+
+## Scripting
+
+The command writes human-readable output by default. For scripting, use the [SDK](/sdk/listing-backups) which returns structured data.

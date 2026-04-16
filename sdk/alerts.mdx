@@ -1,0 +1,125 @@
+---
+title: 'Alerts (SDK)'
+description: 'Send backup notifications programmatically.'
+---
+
+Alerts fire automatically when `createBackup()` completes — you don't have to do anything. This page covers how to customize or trigger alerts manually.
+
+## Automatic alerts
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+const dbdock = await createDBDock();
+const backups = dbdock.get(BackupService);
+
+// Alerts fire automatically based on dbdock.config.json
+const result = await backups.createBackup({ compress: true, encrypt: true });
+```
+
+Provided the `alerts` section of your config is enabled, success and failure notifications go out after each backup.
+
+## Manual alerts
+
+For custom events (not tied to a DBdock backup operation), use `AlertService`:
+
+```javascript
+const { createDBDock, AlertService } = require('dbdock');
+
+const dbdock = await createDBDock();
+const alerts = dbdock.get(AlertService);
+
+await alerts.sendSuccess({
+  database: 'myapp',
+  backupId: 'custom-2026-04-17-001',
+  size: 45_000_000,
+  duration: 8_500,
+});
+```
+
+## Methods
+
+### `sendSuccess(details)`
+
+```typescript
+interface SuccessDetails {
+  database: string;
+  backupId: string;
+  size: number;
+  compressedSize?: number;
+  duration: number;
+  storageKey?: string;
+  encrypted?: boolean;
+}
+```
+
+### `sendFailure(details)`
+
+```typescript
+interface FailureDetails {
+  database: string;
+  error: Error | string;
+  context?: Record<string, unknown>;
+}
+```
+
+### `sendTest()`
+
+Sends a test notification to all configured channels. Same as `npx dbdock test`.
+
+## Controlling channel delivery
+
+Alerts go to every enabled channel. To send to only one channel, configure your `dbdock.config.json` to enable only that channel:
+
+```json
+{
+  "alerts": {
+    "slack": { "enabled": true },
+    "email": { "enabled": false }
+  }
+}
+```
+
+Or programmatically toggle by reloading config per-environment.
+
+## Custom alert content
+
+If the built-in alert content doesn't fit your needs, use your own alerting code and disable DBdock's alerts:
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+const dbdock = await createDBDock();  // dbdock.config.json has alerts disabled
+const backups = dbdock.get(BackupService);
+
+try {
+  const result = await backups.createBackup({ compress: true, encrypt: true });
+  await myCustomAlert.success({
+    text: `Backup ${result.metadata.id} OK`,
+    blocks: [/* whatever format your alerting system uses */],
+  });
+} catch (err) {
+  await myCustomAlert.failure({
+    text: `Backup failed: ${err.message}`,
+  });
+}
+```
+
+This gives you full control at the cost of reimplementing the built-in content.
+
+## Reliability notes
+
+- Alert delivery is **best-effort** — network errors don't fail the backup
+- Alerts are sent **after** the backup completes, so a failure during delivery doesn't delete the backup
+- For critical alerting, use a dedicated alerting service (PagerDuty, Opsgenie) fronted by a webhook — see [Custom webhooks](/alerts/webhooks)
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Alerts overview" icon="bell" href="/alerts/overview">
+    Available channels.
+  </Card>
+  <Card title="Custom webhooks" icon="webhook" href="/alerts/webhooks">
+    Integrate with any HTTP endpoint.
+  </Card>
+</CardGroup>

@@ -1,0 +1,121 @@
+---
+title: 'Cloudinary'
+description: 'Media-platform storage with a generous free tier.'
+---
+
+Cloudinary is primarily a media platform, but its media library doubles as a convenient backup target. The free tier (25 credits/month, ~25 GB storage) covers most small-to-medium databases.
+
+## Configuration
+
+### `dbdock.config.json`
+
+```json
+{
+  "storage": {
+    "provider": "cloudinary",
+    "cloudinary": {
+      "cloudName": "your-cloud-name"
+    }
+  }
+}
+```
+
+### `.env`
+
+```bash
+DBDOCK_CLOUDINARY_API_KEY=your-api-key
+DBDOCK_CLOUDINARY_API_SECRET=your-api-secret
+```
+
+Find your credentials in the [Cloudinary Console](https://console.cloudinary.com/) dashboard.
+
+## Setup
+
+<Steps>
+  <Step title="Create a Cloudinary account">
+    Sign up at [cloudinary.com](https://cloudinary.com/). Free tier is fine for getting started.
+  </Step>
+  <Step title="Get your credentials">
+    Console → Dashboard → Account Details.
+    - **Cloud name** → `cloudName` in config
+    - **API Key** → `DBDOCK_CLOUDINARY_API_KEY`
+    - **API Secret** → `DBDOCK_CLOUDINARY_API_SECRET`
+  </Step>
+  <Step title="Test">
+    ```bash
+    npx dbdock test
+    ```
+  </Step>
+</Steps>
+
+Backups land in the `dbdock_backups/` folder of your Media Library.
+
+## When to pick Cloudinary
+
+<CardGroup cols={2}>
+  <Card title="You don't have AWS/Cloudflare" icon="user-plus">
+    Sign up in 2 minutes, start backing up.
+  </Card>
+  <Card title="Free tier" icon="gift">
+    25 GB for small teams, indefinitely.
+  </Card>
+  <Card title="Already using it" icon="image">
+    If you host images/videos on Cloudinary already, reuse the account.
+  </Card>
+  <Card title="Web UI browsing" icon="eye">
+    The Media Library lets you browse/download backups through a friendly UI.
+  </Card>
+</CardGroup>
+
+## When to NOT pick Cloudinary
+
+- **Large databases.** Past ~25 GB you'll hit the free tier wall and paid plans aren't cost-competitive with S3/R2 for pure storage.
+- **High backup frequency.** Every backup counts as a transformation. Daily backups are fine; per-hour backups will burn through credits.
+- **Compliance (HIPAA, SOC 2).** S3 has a more mature compliance story.
+
+## File organization
+
+Backups are stored as raw files under `dbdock_backups/`. Filenames follow DBdock's standard format:
+
+```
+dbdock_backups/backup-2026-04-16-08-00-00-abc123.sql
+```
+
+You can browse them in the Cloudinary Media Library, though they're not useful to preview — they're encrypted/compressed binary blobs.
+
+## Common errors
+
+<AccordionGroup>
+  <Accordion title="Invalid API credentials">
+    - Double-check `DBDOCK_CLOUDINARY_API_KEY` and `DBDOCK_CLOUDINARY_API_SECRET`
+    - Make sure `cloudName` matches the "Cloud name" field exactly (case sensitive)
+  </Accordion>
+  <Accordion title="Upload fails silently">
+    - Check Cloudinary account usage — you may have hit the free tier quota
+    - Verify the API key has "Media library" access
+  </Accordion>
+  <Accordion title="File not found on restore">
+    - The file must be in `dbdock_backups/` folder (DBdock writes here by default)
+    - Filename must match the standard pattern
+  </Accordion>
+</AccordionGroup>
+
+## Cost
+
+Free tier covers:
+
+- 25 monthly credits (1 credit ≈ 1 GB of storage or ~1000 transformations)
+- Up to 25 GB total storage
+
+Past that, the Plus plan ($99/month) gives 225 GB. If you're at this level, S3 or R2 will be significantly cheaper for pure backup storage.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    Cheaper for large databases.
+  </Card>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Zero egress fees.
+  </Card>
+</CardGroup>

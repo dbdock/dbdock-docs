@@ -1,0 +1,82 @@
+---
+title: 'dbdock migrate-config'
+description: 'Move legacy secrets from the config file to environment variables.'
+---
+
+```bash
+npx dbdock migrate-config
+```
+
+Older versions of DBdock (pre-1.1) stored secrets directly in `dbdock.config.json`. `migrate-config` extracts them and moves them to `.env`, which is where they should be.
+
+## When to run it
+
+If you have any of the following in `dbdock.config.json`:
+
+- `database.password`
+- `storage.s3.accessKeyId` / `secretAccessKey`
+- `storage.cloudinary.apiKey` / `apiSecret`
+- `backup.encryption.secret`
+- `alerts.email.smtp.auth.user` / `pass`
+- `alerts.slack.webhookUrl`
+
+Run this command once — it's a one-shot cleanup.
+
+## What it does
+
+1. **Reads** `dbdock.config.json`
+2. **Extracts** secrets to `.env` (appending, not overwriting existing vars)
+3. **Rewrites** `dbdock.config.json` without the secrets
+4. **Updates** `.gitignore` to ensure `.env` is excluded
+5. **Prints** a summary of what moved where
+
+## Sample output
+
+```
+Analyzing dbdock.config.json...
+
+Found 4 secret(s) in config:
+  • database.password
+  • storage.s3.secretAccessKey
+  • backup.encryption.secret
+  • alerts.slack.webhookUrl
+
+Moving to .env:
+  ✓ DBDOCK_DB_PASSWORD
+  ✓ DBDOCK_STORAGE_SECRET_KEY
+  ✓ DBDOCK_ENCRYPTION_SECRET
+  ✓ DBDOCK_SLACK_WEBHOOK
+
+Updated:
+  ✓ dbdock.config.json (secrets removed)
+  ✓ .env (secrets added)
+  ✓ .gitignore (.env entry added)
+
+Done. Review the changes and commit dbdock.config.json + .gitignore.
+Never commit .env.
+```
+
+## Safe to run multiple times
+
+If there are no secrets in the config, `migrate-config` exits cleanly with no changes. You can run it anytime to check.
+
+## After migration
+
+Enable strict mode to prevent regression:
+
+```bash
+echo 'DBDOCK_STRICT_MODE=true' >> .env
+```
+
+DBdock will then refuse to load any config file that still contains secrets.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Security" icon="lock" href="/core/security">
+    Why secrets don't belong in config files.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/core/configuration">
+    Where every secret should live.
+  </Card>
+</CardGroup>

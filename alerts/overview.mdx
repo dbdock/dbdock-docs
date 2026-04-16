@@ -1,0 +1,108 @@
+---
+title: 'Alerts overview'
+description: 'Get notified when backups succeed or fail.'
+---
+
+DBdock can send notifications when a backup completes (success or failure). Alerts work for both CLI backups and programmatic backups — the system reads from the same `alerts` config in either mode.
+
+## Channels
+
+<CardGroup cols={2}>
+  <Card title="Email" icon="envelope" href="/alerts/email">
+    SMTP via Gmail, SendGrid, AWS SES, Mailgun, or any provider.
+  </Card>
+  <Card title="Slack" icon="slack" href="/alerts/slack">
+    Incoming webhooks — 2-minute setup.
+  </Card>
+  <Card title="Custom webhooks" icon="webhook" href="/alerts/webhooks">
+    Any HTTP endpoint — Discord, WhatsApp, your own service.
+  </Card>
+  <Card title="Scheduling" icon="clock" href="/alerts/scheduling">
+    Run backups on a cron schedule.
+  </Card>
+</CardGroup>
+
+## When alerts fire
+
+Every completed backup triggers an alert, whether it succeeded or failed.
+
+### On success
+
+Alert includes:
+
+- Backup ID
+- Database name
+- Size (original and compressed)
+- Duration
+- Storage location
+- Encryption status
+
+### On failure
+
+Alert includes:
+
+- Error message
+- Database details
+- Timestamp
+- Troubleshooting tip (based on the error)
+
+## Configuration
+
+All alerts are configured in `dbdock.config.json`:
+
+```json
+{
+  "alerts": {
+    "email": {
+      "enabled": true,
+      "smtp": { "host": "...", "port": 587, "secure": false },
+      "from": "backups@yourapp.com",
+      "to": ["admin@yourapp.com"]
+    },
+    "slack": {
+      "enabled": true,
+      "webhookUrl": "https://hooks.slack.com/services/..."
+    }
+  }
+}
+```
+
+Secrets (SMTP password, Slack webhook URL) go in `.env`:
+
+```bash
+DBDOCK_SMTP_USER=your-smtp-user
+DBDOCK_SMTP_PASS=your-smtp-password
+DBDOCK_SLACK_WEBHOOK=https://hooks.slack.com/services/...
+```
+
+## Testing alerts
+
+```bash
+npx dbdock test
+```
+
+Sends a test notification to each enabled channel without creating a backup.
+
+## Delivery behavior
+
+<Note>
+Alerts are sent **asynchronously** — they never block backup completion. If an alert delivery fails, the backup still succeeds and the failure is logged.
+</Note>
+
+## Best practices
+
+- **Route failures to an on-call channel.** Successes are nice-to-have; failures need eyes on them fast.
+- **Don't wire backups into a noisy channel.** A 100-person #general gets ignored.
+- **Use email for batch reports, Slack for real-time.** Set email for weekly summaries, Slack for immediate failures.
+- **Test after setup.** Run `dbdock test` to confirm delivery before trusting the alerts.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Email setup" icon="envelope" href="/alerts/email">
+    Configure SMTP.
+  </Card>
+  <Card title="Slack setup" icon="slack" href="/alerts/slack">
+    2-minute webhook setup.
+  </Card>
+</CardGroup>

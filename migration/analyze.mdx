@@ -1,0 +1,106 @@
+---
+title: 'dbdock analyze'
+description: 'Scan a database and print its shape, types, and inconsistencies.'
+---
+
+```bash
+npx dbdock analyze <database-url>
+```
+
+`analyze` reads the structure of a database — MongoDB or PostgreSQL — and reports what's inside. Use it before running a cross-database migration to understand what you're migrating.
+
+## Examples
+
+### Analyze MongoDB
+
+```bash
+npx dbdock analyze "mongodb://localhost:27017/myapp"
+```
+
+### Analyze PostgreSQL
+
+```bash
+npx dbdock analyze "postgresql://user:pass@localhost:5432/myapp"
+```
+
+## What it reports
+
+### For MongoDB
+
+- Collection names and document counts
+- Field names per collection
+- Inferred types per field (with frequency if heterogeneous)
+- Nesting depth
+- Potential reference fields (`_id` patterns that look like foreign keys)
+- Index coverage
+
+### For PostgreSQL
+
+- Table names and row counts
+- Column types and nullability
+- Primary and foreign keys
+- Indexes
+- Sequence/identity columns
+
+### Sample output (MongoDB)
+
+```
+Database: myapp (mongodb://localhost:27017)
+Collections: 4
+
+┌──────────────┬──────────┬────────┬─────────┐
+│ Collection   │ Documents│ Fields │ Indexes │
+├──────────────┼──────────┼────────┼─────────┤
+│ users        │   12,450 │     8  │    3    │
+│ orders       │   48,910 │    12  │    5    │
+│ products     │      820 │    14  │    2    │
+│ reviews      │    3,180 │     6  │    1    │
+└──────────────┴──────────┴────────┴─────────┘
+
+users:
+  _id            ObjectId     (unique)
+  email          String       (unique, 12,450 values)
+  name           String
+  age            Number       (99.2% Int, 0.8% Double)  ⚠️ mixed types
+  created_at     Date
+  metadata       Object       (nested, depth 2)
+  deleted_at     Date|null
+  tags           Array<String>
+
+⚠️ Inconsistencies found:
+  • users.age has mixed numeric types (Int and Double)
+  • orders.total has 12 documents missing the field
+  • products.price has 3 documents with type String instead of Number
+```
+
+## What to do with the output
+
+<CardGroup cols={2}>
+  <Card title="Spot inconsistencies early" icon="triangle-exclamation">
+    Mixed types and missing fields cause migration errors. Fix them in the source first when you can.
+  </Card>
+  <Card title="Plan the schema" icon="diagram-project">
+    Decide which nested objects to flatten vs keep as jsonb.
+  </Card>
+  <Card title="Pick batch size" icon="layer-group">
+    Huge collections need smaller batches (see `--batch-size`).
+  </Card>
+  <Card title="Export to config" icon="file-export">
+    Save the proposed mapping with `dbdock migrate --export-config`.
+  </Card>
+</CardGroup>
+
+## Read-only
+
+`analyze` only reads — it doesn't modify the source database. Safe to run against production.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock migrate" icon="arrows-left-right" href="/migration/migrate">
+    Run the actual migration.
+  </Card>
+  <Card title="Schema mapping" icon="diagram-project" href="/migration/schema-mapping">
+    How DBdock maps types.
+  </Card>
+</CardGroup>

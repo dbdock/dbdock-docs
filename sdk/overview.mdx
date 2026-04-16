@@ -1,0 +1,132 @@
+---
+title: 'SDK overview'
+description: 'Use DBdock programmatically in your Node.js app.'
+---
+
+Everything the CLI does, you can do from code. DBdock exports a small NestJS-based module that works with any Node.js backend — you don't need to understand NestJS to use it.
+
+## Install
+
+```bash
+npm install dbdock
+```
+
+## The one pattern to learn
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+async function main() {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  const result = await backups.createBackup({
+    compress: true,
+    encrypt: true,
+  });
+
+  console.log('Backup created:', result.metadata.id);
+}
+
+main().catch(console.error);
+```
+
+Three steps:
+
+1. `await createDBDock()` — initializes DBdock (reads `dbdock.config.json` and env vars)
+2. `dbdock.get(ServiceClass)` — fetches the service you need
+3. Call methods on the service
+
+## Available services
+
+<CardGroup cols={2}>
+  <Card title="BackupService" icon="download" href="/sdk/creating-backups">
+    Create backups, list backups, get metadata.
+  </Card>
+  <Card title="StorageService" icon="cloud">
+    Direct access to the storage adapter (advanced).
+  </Card>
+  <Card title="CryptoService" icon="lock">
+    Encrypt/decrypt arbitrary data (advanced).
+  </Card>
+  <Card title="AlertService" icon="bell" href="/sdk/alerts">
+    Send notifications programmatically.
+  </Card>
+</CardGroup>
+
+## TypeScript support
+
+DBdock ships full type definitions. In TypeScript:
+
+```typescript
+import { createDBDock, BackupService, type BackupMetadata } from 'dbdock';
+
+async function main(): Promise<void> {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  const result = await backups.createBackup({
+    compress: true,
+    encrypt: true,
+  });
+
+  const metadata: BackupMetadata = result.metadata;
+  console.log(metadata.id);
+}
+```
+
+## Configuration
+
+The SDK reads from the same sources as the CLI:
+
+1. `dbdock.config.json` (path controlled by `DBDOCK_CONFIG_PATH`)
+2. Environment variables (`.env` and `.env.local`)
+3. Environment-only if no config file exists
+
+No separate SDK configuration needed.
+
+## Lifecycle
+
+`createDBDock()` returns a context. Internally it holds connections and caches. If you're running a long-lived process, create it once and reuse it:
+
+```javascript
+const dbdock = await createDBDock();  // once at startup
+const backups = dbdock.get(BackupService);
+
+// use `backups` across many backup operations
+```
+
+If you're running in a short-lived context (CLI script, Lambda), creating per-invocation is fine.
+
+## What's supported programmatically
+
+| Operation | CLI | SDK |
+|---|---|---|
+| Create backup | ✅ | ✅ |
+| List backups | ✅ | ✅ |
+| Get backup metadata | ✅ | ✅ |
+| Delete backup | ✅ | ❌ (CLI only for now) |
+| Restore backup | ✅ | ❌ (CLI only for now) |
+| Cleanup (retention) | ✅ | ✅ |
+| Send alerts | ✅ | ✅ |
+| Cross-DB migration | ✅ | ❌ (CLI only) |
+| copydb | ✅ | ❌ (CLI only) |
+
+Restore and delete programmatic APIs are planned — follow [dbdock/dbdock#issues](https://github.com/dbdock/dbdock/issues) for updates.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Creating backups" icon="download" href="/sdk/creating-backups">
+    Full API for `BackupService.createBackup()`.
+  </Card>
+  <Card title="Listing backups" icon="list" href="/sdk/listing-backups">
+    Query the backup history.
+  </Card>
+  <Card title="Scheduling" icon="clock" href="/sdk/scheduling">
+    Build a scheduler with `node-cron`.
+  </Card>
+  <Card title="Alerts" icon="bell" href="/sdk/alerts">
+    Use the alert system from code.
+  </Card>
+</CardGroup>

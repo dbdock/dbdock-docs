@@ -1,0 +1,154 @@
+---
+title: 'AWS S3'
+description: 'Store backups in Amazon S3 or any S3-compatible service.'
+---
+
+DBdock uses the AWS SDK under the hood, so anything S3-compatible works: AWS S3, MinIO, Wasabi, DigitalOcean Spaces, Backblaze B2, etc.
+
+## Configuration
+
+### `dbdock.config.json`
+
+```json
+{
+  "storage": {
+    "provider": "s3",
+    "s3": {
+      "bucket": "my-dbdock-backups",
+      "region": "us-east-1"
+    }
+  }
+}
+```
+
+For non-AWS S3-compatible services, add `endpoint`:
+
+```json
+{
+  "storage": {
+    "provider": "s3",
+    "s3": {
+      "bucket": "my-dbdock-backups",
+      "region": "us-east-1",
+      "endpoint": "https://s3.wasabisys.com"
+    }
+  }
+}
+```
+
+### `.env`
+
+```bash
+DBDOCK_STORAGE_ACCESS_KEY=AKIA...
+DBDOCK_STORAGE_SECRET_KEY=...
+```
+
+## Required IAM permissions
+
+Create a dedicated IAM user for DBdock with **least-privilege** access:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-dbdock-backups",
+        "arn:aws:s3:::my-dbdock-backups/*"
+      ]
+    }
+  ]
+}
+```
+
+Replace `my-dbdock-backups` with your bucket name. The IAM user does not need any other permissions.
+
+## Bucket setup
+
+<Steps>
+  <Step title="Create the bucket">
+    AWS Console → S3 → Create bucket. Pick a region close to your database.
+  </Step>
+  <Step title="Block public access">
+    Under "Block Public Access", enable **all four** settings. Backups should never be public.
+  </Step>
+  <Step title="Enable versioning">
+    Under "Bucket Versioning", enable it. This protects against ransomware — deleted backups can be recovered.
+  </Step>
+  <Step title="Enable encryption at rest">
+    Under "Default encryption", enable SSE-S3 (AES-256) or SSE-KMS. DBdock's own encryption layer is separate — both work together.
+  </Step>
+  <Step title="Optional: lifecycle rule">
+    Move backups older than N days to Glacier or delete them via S3 lifecycle rules. Cheaper than keeping everything in Standard.
+  </Step>
+</Steps>
+
+## Testing the connection
+
+```bash
+npx dbdock test
+```
+
+Look for the `Storage: AWS S3` section in the output. DBdock uploads a tiny test object and deletes it to verify full read/write/delete permissions.
+
+## Cross-region replication
+
+If you need multi-region disaster recovery, configure S3 Cross-Region Replication (CRR) on the bucket. DBdock is agnostic to this — it writes to the primary and S3 handles the replication.
+
+## S3-compatible services
+
+Tested combinations:
+
+| Service | Endpoint | Notes |
+|---|---|---|
+| **AWS S3** | (omit) | Default |
+| **MinIO** | `https://minio.example.com` | Self-hosted |
+| **Wasabi** | `https://s3.wasabisys.com` | Cheaper S3-compatible |
+| **DigitalOcean Spaces** | `https://<region>.digitaloceanspaces.com` | |
+| **Backblaze B2** | `https://s3.<region>.backblazeb2.com` | Use B2's S3-compatible endpoint |
+
+## Common errors
+
+<AccordionGroup>
+  <Accordion title="Access Denied (403)">
+    - Check IAM policy is attached to the user
+    - Bucket name is correct and in the right region
+    - If using S3 block public access, IAM policy must explicitly allow the actions above
+  </Accordion>
+  <Accordion title="NoSuchBucket">
+    - Bucket name is misspelled
+    - Bucket exists in a different region — set `region` correctly
+  </Accordion>
+  <Accordion title="SignatureDoesNotMatch">
+    - Access/secret key pair is wrong or expired
+    - Clock drift on the machine running DBdock (S3 requires ±15 min of accurate time)
+  </Accordion>
+</AccordionGroup>
+
+## Cost considerations
+
+For a typical setup (daily backup, 30-day retention, ~100 MB compressed backup):
+
+- **Storage:** 3 GB × $0.023/GB ≈ $0.07/month
+- **Requests:** ~60 PUT + 100 GET/LIST = negligible
+- **Egress on restore:** $0.09/GB outside AWS
+
+R2 and Cloudinary have no egress fees — worth considering if you restore often.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Zero-egress S3-compatible alternative.
+  </Card>
+  <Card title="Security" icon="lock" href="/core/security">
+    Storage security best practices.
+  </Card>
+</CardGroup>

@@ -1,0 +1,132 @@
+---
+title: 'Slack alerts'
+description: 'Send backup notifications to Slack via incoming webhooks.'
+---
+
+Slack alerts use [incoming webhooks](https://api.slack.com/messaging/webhooks) — the simplest Slack integration. No app installation required for the user side; just a webhook URL.
+
+## Setup
+
+<Steps>
+  <Step title="Create a Slack app">
+    Go to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App → From scratch**. Name it "DBdock" (or whatever you like) and pick your workspace.
+  </Step>
+  <Step title="Enable incoming webhooks">
+    In the app settings, go to **Incoming Webhooks** and toggle it on.
+  </Step>
+  <Step title="Add the webhook to a channel">
+    Click **Add New Webhook to Workspace**. Pick the channel where alerts should post (e.g. `#backups` or `#ops-alerts`). Slack generates a webhook URL.
+  </Step>
+  <Step title="Copy the URL">
+    The URL looks like `https://hooks.slack.com/services/T.../B.../...`. Copy it.
+  </Step>
+</Steps>
+
+## Configuration
+
+### `dbdock.config.json`
+
+```json
+{
+  "alerts": {
+    "slack": {
+      "enabled": true
+    }
+  }
+}
+```
+
+### `.env`
+
+```bash
+DBDOCK_SLACK_WEBHOOK=https://hooks.slack.com/services/T.../B.../...
+```
+
+Alternatively, set the webhook in the config (less recommended):
+
+```json
+{
+  "alerts": {
+    "slack": {
+      "enabled": true,
+      "webhookUrl": "https://hooks.slack.com/services/T.../B.../..."
+    }
+  }
+}
+```
+
+The `.env` approach is preferred — keeps the URL out of version control.
+
+## Message format
+
+Slack messages look like:
+
+<CardGroup cols={2}>
+  <Card title="Success" icon="circle-check">
+    **✓ Backup complete**
+    Database: `myapp`
+    Size: 45.2 MB (compressed)
+    Duration: 8.4s
+    Storage: `s3://my-backups/dbdock_backups/backup-...sql`
+  </Card>
+  <Card title="Failure" icon="circle-xmark">
+    **✗ Backup failed**
+    Database: `myapp`
+    Error: Connection timeout
+    Timestamp: 2026-04-16 08:00:02
+    Tip: Check database is reachable from the runner
+  </Card>
+</CardGroup>
+
+## Testing
+
+```bash
+npx dbdock test
+```
+
+Sends a test message to the channel. Verify it arrives and looks right.
+
+## Routing
+
+### Alerting strategy
+
+- `#backups` — all events (success + failure)
+- `#ops-alerts` — failures only (separate webhook, separate app instance)
+
+DBdock supports one webhook per environment. For multiple channels, run separate DBdock configs (dev, staging, prod) with different webhook URLs.
+
+### Channel permissions
+
+The webhook can only post to the channel it was created for. To change channels, create a new webhook and update `DBDOCK_SLACK_WEBHOOK`.
+
+## Common issues
+
+<AccordionGroup>
+  <Accordion title="'invalid_payload' error">
+    Webhook URL is correct but Slack rejected the message. Usually a transient issue — retry.
+  </Accordion>
+  <Accordion title="'channel_not_found' or 'no_active_hooks'">
+    The channel was deleted, or the webhook was revoked. Recreate the webhook.
+  </Accordion>
+  <Accordion title="Message arrives but looks wrong">
+    If you see raw JSON or unformatted text, your Slack workspace may have legacy incoming webhooks (pre-2019). Recreate the app from scratch.
+  </Accordion>
+</AccordionGroup>
+
+## Security
+
+- The webhook URL is a secret — anyone with it can post to the channel
+- Store it in `.env`, never commit it
+- Rotate webhooks periodically (Slack dashboard → Incoming Webhooks → regenerate)
+- If accidentally committed, [revoke](https://api.slack.com/apps) it immediately
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Email alerts" icon="envelope" href="/alerts/email">
+    SMTP-based alerts.
+  </Card>
+  <Card title="Custom webhooks" icon="webhook" href="/alerts/webhooks">
+    Discord, Teams, and custom endpoints.
+  </Card>
+</CardGroup>

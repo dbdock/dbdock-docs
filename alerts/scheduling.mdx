@@ -1,0 +1,173 @@
+---
+title: 'Scheduling backups'
+description: 'Run automated backups on a cron schedule.'
+---
+
+DBdock supports three ways to run scheduled backups. Pick based on your deployment.
+
+<CardGroup cols={3}>
+  <Card title="System cron" icon="server">
+    Simplest. A crontab entry runs `dbdock backup` on a schedule.
+  </Card>
+  <Card title="Programmatic" icon="code">
+    Long-lived Node.js process using `node-cron`.
+  </Card>
+  <Card title="Cloud scheduler" icon="cloud">
+    Kubernetes CronJob, AWS EventBridge, GCP Cloud Scheduler.
+  </Card>
+</CardGroup>
+
+## Option 1 — System cron (recommended for single server)
+
+Add a crontab entry:
+
+```bash
+crontab -e
+```
+
+```
+0 2 * * *  cd /app && npx dbdock backup >> /var/log/dbdock.log 2>&1
+```
+
+This runs a backup at 02:00 every day. Adjust the path, time, and log file.
+
+### Pros
+
+- Simplest possible setup
+- Battle-tested scheduler
+- Works even if DBdock isn't running
+
+### Cons
+
+- Limited logging/observability
+- No programmatic control
+- Harder on Kubernetes/serverless
+
+## Option 2 — Programmatic with node-cron
+
+Run DBdock as a long-lived Node.js process. Useful when you want to share backup scheduling with the rest of your app.
+
+```bash
+npm install node-cron
+```
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+const cron = require('node-cron');
+
+async function main() {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  cron.schedule('0 2 * * *', async () => {
+    try {
+      const result = await backups.createBackup({
+        compress: true,
+        encrypt: true,
+      });
+      console.log(`Backup ${result.metadata.id} completed`);
+    } catch (err) {
+      console.error('Backup failed', err);
+    }
+  });
+
+  console.log('Scheduler started');
+}
+
+main();
+```
+
+Keep the process alive with PM2, systemd, or Docker. See [SDK → scheduling](/sdk/scheduling) for more detail.
+
+### Pros
+
+- Full control — custom logic before/after backup
+- Tight integration with app observability
+- Works with alert programmatic API
+
+### Cons
+
+- Needs a long-lived process
+- One more thing that can crash
+
+## Option 3 — Cloud schedulers
+
+### Kubernetes CronJob
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dbdock-backup
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: dbdock
+            image: node:20-alpine
+            command: ["npx", "dbdock", "backup"]
+            envFrom:
+            - secretRef:
+                name: dbdock-secrets
+          restartPolicy: OnFailure
+```
+
+### AWS EventBridge + Fargate/Lambda
+
+Schedule rule → ECS RunTask (Fargate) that runs a DBdock container. Or package as a Lambda if your backup fits in 15 minutes and 10 GB.
+
+### GCP Cloud Scheduler + Cloud Run
+
+Cloud Scheduler → HTTPS → Cloud Run service that invokes `dbdock backup`.
+
+### Pros
+
+- Fully managed, scales with your infra
+- Rich logging and retry semantics
+- Runs even if your app is down
+
+### Cons
+
+- More moving pieces
+- Infrastructure-specific setup
+
+## Using the `dbdock schedule` command
+
+The `dbdock schedule` command stores schedules in `dbdock.config.json`:
+
+```json
+{
+  "schedules": [
+    { "name": "daily", "cron": "0 2 * * *", "enabled": true }
+  ]
+}
+```
+
+These are **not executed by the CLI alone** — they're config entries. To execute them, use the programmatic approach above, which reads the schedules from the config file automatically.
+
+If you're using system cron or cloud schedulers, skip `dbdock schedule` — your scheduler of choice holds the schedule.
+
+## Recommended schedule patterns
+
+| Frequency | Cron | Use case |
+|---|---|---|
+| Every 6 hours | `0 */6 * * *` | High-churn production databases |
+| Daily at 2 AM | `0 2 * * *` | Most production setups |
+| Weekly | `0 0 * * 0` | Archival + weekly snapshots |
+| Monthly | `0 0 1 * *` | Compliance retention |
+
+Pair a frequent schedule with a retention policy to keep storage under control — see [Retention strategies](/guides/retention-strategies).
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock schedule" icon="clock" href="/cli/schedule">
+    Manage schedules via CLI.
+  </Card>
+  <Card title="SDK scheduling" icon="code" href="/sdk/scheduling">
+    Programmatic scheduling details.
+  </Card>
+</CardGroup>

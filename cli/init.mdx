@@ -1,0 +1,63 @@
+---
+title: 'dbdock init'
+description: 'Interactive setup wizard — run once per project.'
+---
+
+```bash
+npx dbdock init
+```
+
+`init` creates your initial configuration. It's interactive — DBdock asks questions, you answer, and it generates the right files.
+
+## What it asks
+
+1. **Database connection** — host, port, user, database name
+2. **Storage provider** — local, S3, R2, or Cloudinary
+3. **Storage credentials** (for cloud providers)
+4. **Encryption** — enable/disable, generates a key if yes
+5. **Compression** — enable/disable, compression level
+6. **Alerts** — optional email (SMTP) and Slack setup
+
+## What it creates
+
+Two files:
+
+<CardGroup cols={2}>
+  <Card title="dbdock.config.json" icon="file-lines">
+    Non-sensitive configuration. Commit this.
+  </Card>
+  <Card title=".env" icon="file-shield">
+    Secrets. **Never commit.** Automatically added to `.gitignore`.
+  </Card>
+</CardGroup>
+
+It also updates `.gitignore` to include `.env`, `backups/`, and `*.backup`.
+
+## Environment-only setup
+
+If you prefer to skip the config file entirely, you can configure DBdock via environment variables alone. Set these in `.env`:
+
+```bash
+DBDOCK_DB_URL=postgresql://user:pass@host:5432/db
+STORAGE_PROVIDER=s3
+STORAGE_BUCKET=my-backups
+DBDOCK_STORAGE_ACCESS_KEY=...
+DBDOCK_STORAGE_SECRET_KEY=...
+```
+
+See the [Configuration reference](/core/configuration) for the full list.
+
+## Re-running init
+
+Running `init` again in a directory that already has a config file will ask whether to overwrite it. Existing values become defaults in the prompts, so you only need to change what you want to change.
+
+## After init
+
+<CardGroup cols={2}>
+  <Card title="Verify setup" icon="stethoscope" href="/cli/test">
+    Run `dbdock test` to validate everything.
+  </Card>
+  <Card title="First backup" icon="download" href="/cli/backup">
+    Run `dbdock backup` to create your first backup.
+  </Card>
+</CardGroup>

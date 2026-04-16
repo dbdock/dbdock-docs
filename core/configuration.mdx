@@ -1,0 +1,205 @@
+---
+title: 'Configuration'
+description: 'Complete reference for dbdock.config.json and environment variables.'
+---
+
+DBdock can be configured via `dbdock.config.json`, environment variables, or a mix of both. Secrets always live in environment variables — never in the config file.
+
+<Warning>
+**Security-first.** Passwords, API keys, webhooks, and encryption secrets must be set via environment variables. The config file is designed to be committed to your repository; the `.env` file is designed not to be.
+</Warning>
+
+## Config file structure
+
+`dbdock.config.json` has four top-level sections:
+
+```json
+{
+  "database":  { /* connection details (no password) */ },
+  "storage":   { /* storage provider config */ },
+  "backup":    { /* format, compression, encryption, retention */ },
+  "alerts":    { /* email & slack notifications */ }
+}
+```
+
+## Database
+
+### Option 1 — URL via environment (recommended)
+
+Set `DBDOCK_DB_URL` or `DATABASE_URL` to a full PostgreSQL URL. When present, it overrides anything in `dbdock.config.json`.
+
+```bash
+DBDOCK_DB_URL=postgresql://user:password@host:5432/database
+# or
+DATABASE_URL=postgresql://user:password@host:5432/database
+```
+
+### Option 2 — Config file with password in env
+
+```json
+{
+  "database": {
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "database": "myapp"
+  }
+}
+```
+
+Password comes from `DBDOCK_DB_PASSWORD`.
+
+### Option 3 — `.pgpass`
+
+For host-level credential isolation, use PostgreSQL's `.pgpass` file:
+
+```bash
+touch ~/.pgpass
+chmod 600 ~/.pgpass
+echo "localhost:5432:myapp:postgres:my-secure-password" >> ~/.pgpass
+```
+
+DBdock uses `.pgpass` automatically when present.
+
+## Storage
+
+Pick one provider. Each has its own dedicated page with setup instructions:
+
+<CardGroup cols={2}>
+  <Card title="Local" icon="folder" href="/storage/local">
+    Filesystem storage for single-server setups.
+  </Card>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    S3 or any S3-compatible service.
+  </Card>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Zero-egress object storage.
+  </Card>
+  <Card title="Cloudinary" icon="image" href="/storage/cloudinary">
+    Media platform with generous free tier.
+  </Card>
+</CardGroup>
+
+## Backup
+
+```json
+{
+  "backup": {
+    "format": "custom",
+    "compression": {
+      "enabled": true,
+      "level": 6
+    },
+    "encryption": {
+      "enabled": true
+    },
+    "retention": {
+      "enabled": true,
+      "maxBackups": 100,
+      "maxAgeDays": 30,
+      "minBackups": 5,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `format` | `'custom' \| 'plain' \| 'directory' \| 'tar'` | `'custom'` | PostgreSQL backup format |
+| `compression.enabled` | boolean | `true` | Apply zstd compression |
+| `compression.level` | 0–11 | `6` | zstd compression level |
+| `encryption.enabled` | boolean | `true` | AES-256-GCM encryption |
+| `retention.enabled` | boolean | `true` | Enable automatic cleanup |
+| `retention.maxBackups` | number | `100` | Cap total backup count |
+| `retention.maxAgeDays` | number | `30` | Delete backups older than N days |
+| `retention.minBackups` | number | `5` | Never delete below this count |
+| `retention.runAfterBackup` | boolean | `true` | Run cleanup after each backup |
+
+Encryption key is read from `DBDOCK_ENCRYPTION_SECRET`. Generate a key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+## Alerts
+
+See the dedicated alert pages for setup:
+
+<CardGroup cols={2}>
+  <Card title="Email" icon="envelope" href="/alerts/email">
+    SMTP via Gmail, SendGrid, SES, Mailgun, or any provider.
+  </Card>
+  <Card title="Slack" icon="slack" href="/alerts/slack">
+    Incoming webhooks.
+  </Card>
+</CardGroup>
+
+## Environment variables reference
+
+DBdock reads from both `.env` and `.env.local`. `.env.local` takes priority.
+
+### Database
+
+| Variable | Description |
+|---|---|
+| `DBDOCK_DB_URL` | Full PostgreSQL URL |
+| `DATABASE_URL` | Same as `DBDOCK_DB_URL` (alternative name) |
+| `DBDOCK_DB_PASSWORD` | Password (when not using URL form) |
+| `DB_HOST` | Database host |
+| `DB_PORT` | Database port |
+| `DB_USER` | Database user |
+| `DB_NAME` | Database name |
+
+### Storage
+
+| Variable | Description |
+|---|---|
+| `STORAGE_PROVIDER` | `local` \| `s3` \| `r2` \| `cloudinary` |
+| `STORAGE_BUCKET` | Bucket/container name |
+| `STORAGE_LOCAL_PATH` | Path for local storage |
+| `DBDOCK_STORAGE_ACCESS_KEY` | S3/R2 access key |
+| `DBDOCK_STORAGE_SECRET_KEY` | S3/R2 secret key |
+| `DBDOCK_CLOUDINARY_API_KEY` | Cloudinary API key |
+| `DBDOCK_CLOUDINARY_API_SECRET` | Cloudinary API secret |
+
+### Encryption
+
+| Variable | Description |
+|---|---|
+| `DBDOCK_ENCRYPTION_SECRET` | 64-char hex key |
+| `ENCRYPTION_ENABLED` | `true` \| `false` |
+| `ENCRYPTION_ITERATIONS` | PBKDF2 iterations (default `100000`) |
+
+### Alerts
+
+| Variable | Description |
+|---|---|
+| `DBDOCK_SMTP_USER` | SMTP username |
+| `DBDOCK_SMTP_PASS` | SMTP password |
+| `DBDOCK_SLACK_WEBHOOK` | Slack incoming webhook URL |
+| `DBDOCK_CUSTOM_WEBHOOK` | Custom HTTP webhook URL |
+
+### Runtime
+
+| Variable | Description |
+|---|---|
+| `DBDOCK_CONFIG_PATH` | Path to `dbdock.config.json` (default: `./dbdock.config.json`) |
+| `DBDOCK_STRICT_MODE` | `true` to refuse any secret read from the config file |
+
+## Strict mode
+
+Set `DBDOCK_STRICT_MODE=true` to enforce environment-only secrets. DBdock will refuse to load any configuration where a secret appears in the config file, preventing accidental commits.
+
+Recommended for CI and production.
+
+## Config migration
+
+If you have secrets in `dbdock.config.json` from an older version:
+
+```bash
+npx dbdock migrate-config
+```
+
+DBdock moves them to `.env`, cleans up the config file, and updates `.gitignore`. See [`migrate-config`](/cli/migrate-config).

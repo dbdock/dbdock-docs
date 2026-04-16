@@ -1,0 +1,153 @@
+---
+title: 'Creating backups'
+description: 'Create database backups programmatically with BackupService.'
+---
+
+## Basic usage
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+
+async function createBackup() {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  const result = await backups.createBackup({
+    format: 'custom',
+    compress: true,
+    encrypt: true,
+  });
+
+  console.log(`Backup created: ${result.metadata.id}`);
+  console.log(`Size: ${result.metadata.formattedSize}`);
+  console.log(`Path: ${result.storageKey}`);
+
+  return result;
+}
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `format` | `'custom' \| 'plain' \| 'directory' \| 'tar'` | from config | PostgreSQL backup format |
+| `compress` | `boolean` | from config | Apply zstd compression |
+| `encrypt` | `boolean` | from config | AES-256-GCM encryption |
+| `type` | `'full' \| 'schema' \| 'data'` | `'full'` | What to back up |
+
+All options default to the values in `dbdock.config.json`. Pass only the ones you want to override.
+
+## Result shape
+
+```typescript
+interface BackupResult {
+  metadata: BackupMetadata;
+  storageKey: string;
+}
+
+interface BackupMetadata {
+  id: string;
+  database: string;
+  startTime: Date;
+  endTime: Date;
+  duration: number;        // ms
+  size: number;            // original bytes
+  compressedSize: number;  // compressed bytes
+  formattedSize: string;   // e.g. "45.23 MB"
+  format: 'custom' | 'plain' | 'directory' | 'tar';
+  compression: { enabled: boolean; level?: number };
+  encryption: { enabled: boolean; algorithm?: string } | null;
+  storageKey: string;
+}
+```
+
+## Examples
+
+### Schema-only backup
+
+```javascript
+await backups.createBackup({ type: 'schema' });
+```
+
+Captures DDL (tables, indexes, constraints) but not data. Tiny files — good for tracking schema evolution.
+
+### Data-only backup
+
+```javascript
+await backups.createBackup({ type: 'data' });
+```
+
+Captures rows without DDL. Useful when you're restoring into a database that already has the schema.
+
+### Plain SQL backup
+
+```javascript
+await backups.createBackup({ format: 'plain', compress: false });
+```
+
+Human-readable SQL you can `grep`, inspect, or feed to `psql`. Usually much larger than `custom` format.
+
+### Maximum compression for archival
+
+```javascript
+await backups.createBackup({ compress: true, compressionLevel: 11 });
+```
+
+Slower to create but up to 20-30% smaller than the default level 6. Worth it for long-term retention.
+
+### One-off unencrypted backup
+
+```javascript
+await backups.createBackup({ encrypt: false });
+```
+
+Overrides the config's encryption setting for this single backup.
+
+## Error handling
+
+```javascript
+try {
+  const result = await backups.createBackup({ compress: true });
+} catch (err) {
+  if (err.code === 'DATABASE_CONNECTION_FAILED') {
+    // handle connection errors specifically
+  }
+  console.error('Backup failed:', err.message);
+}
+```
+
+Errors from `createBackup` are standard `Error` instances with a `.code` property for structured handling.
+
+## Alerts are automatic
+
+If alerts are configured in `dbdock.config.json`, they fire after `createBackup` — success or failure. You don't need to do anything extra.
+
+See [SDK → alerts](/sdk/alerts) if you want to send alerts manually.
+
+## Performance tips
+
+### Large databases
+
+Stream the output — which DBdock does by default — so you never buffer the whole dump. Avoid calling `createBackup` concurrently against the same database; PostgreSQL will serialize the dumps anyway and you'll waste resources.
+
+### Remote databases with slow links
+
+Run the backup process on a machine *near* the database, not near your storage. The dump is usually 2-10x larger than the compressed/encrypted output, so it's cheaper to dump locally and upload than to dump across the internet.
+
+### Monitoring
+
+Measure `result.metadata.duration` and alert if it drifts. Backup duration is a good proxy for database health.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Listing backups" icon="list" href="/sdk/listing-backups">
+    Query the backup history.
+  </Card>
+  <Card title="Scheduling" icon="clock" href="/sdk/scheduling">
+    Run on a schedule.
+  </Card>
+  <Card title="Alerts" icon="bell" href="/sdk/alerts">
+    Programmatic alerts.
+  </Card>
+</CardGroup>

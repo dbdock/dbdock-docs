@@ -1,0 +1,185 @@
+---
+title: 'FAQ'
+description: 'Quick answers to common questions.'
+---
+
+## General
+
+### Is DBdock free?
+
+Yes — MIT licensed, free forever, self-hosted. No SaaS component, no vendor lock-in.
+
+### Who's behind DBdock?
+
+Created by [Naheem Olaide](https://github.com/appdever01). Open-source project, contributions welcome on [GitHub](https://github.com/dbdock/dbdock).
+
+### Is DBdock production-ready?
+
+DBdock is used in production by multiple teams. The backup and restore pipelines have been stable since v1.0. Cross-database migration (MongoDB ↔ Postgres) is newer — we recommend a dry run before production use.
+
+### How is DBdock different from `pg_dump`?
+
+`pg_dump` is the engine — DBdock builds around it with:
+
+- Storage adapters (S3, R2, Cloudinary, local)
+- Compression and encryption pipelines
+- Retention and scheduling
+- Restore UX with filtering
+- Cross-database migration (MongoDB ↔ Postgres)
+
+Think of DBdock as the "everything around pg_dump" toolkit.
+
+## Installation
+
+### Can I use DBdock without installing it?
+
+Yes — `npx dbdock <command>` works without installing.
+
+### Does DBdock need Node.js?
+
+Yes, Node 18 or later. If you can't install Node, a Docker image is the easiest workaround.
+
+### Which Postgres versions are supported?
+
+DBdock supports whatever your `pg_dump` supports. In practice: Postgres 12+. Match `pg_dump` version to your server version.
+
+## Backup behavior
+
+### How long does a backup take?
+
+Depends on database size, compression level, and network. Rough ballpark:
+
+- 100 MB DB, local storage: ~2-5 seconds
+- 1 GB DB, S3 us-east-1: ~30-60 seconds
+- 10 GB DB, S3 cross-region: ~5-10 minutes
+
+Run a test backup and measure for your setup.
+
+### Can I back up a live production database?
+
+Yes — `pg_dump` uses MVCC so it doesn't block reads or writes. Expect:
+
+- Slightly higher CPU during the dump
+- Temporary replication lag on replicas
+- Long-running transactions can hold locks until the dump completes
+
+Run during low-traffic windows if possible.
+
+### Can I back up only some tables?
+
+Not directly in the CLI yet — it's a whole-database tool. For partial backups, use `pg_dump --table=...` directly and upload the result yourself.
+
+Follow [issue tracker](https://github.com/dbdock/dbdock/issues) for table-level backup support.
+
+### Does DBdock support incremental backups?
+
+PostgreSQL doesn't have native incremental dump — DBdock does full logical backups each time. For incremental, use PostgreSQL's built-in WAL archiving separately.
+
+Cross-database **migration** does support incremental mode — see [Incremental migration](/migration/incremental).
+
+## Restore
+
+### Can I restore to a different database?
+
+Yes. In `dbdock restore`, choose "New Database Instance (Migrate)" and enter target connection details. See [`dbdock restore`](/cli/restore).
+
+### Can I restore only specific tables?
+
+Not through DBdock. Restore into a temporary database and use `pg_dump --table` to extract what you want, then load into the target.
+
+### Can I preview a backup's contents?
+
+Not via DBdock currently. Restore to a temporary database and query it.
+
+## Storage
+
+### Can I use multiple storage providers simultaneously?
+
+No, DBdock has one active provider per config. Workarounds:
+
+- Run multiple DBdock configs (different `dbdock.config.json` paths via `DBDOCK_CONFIG_PATH`)
+- Sync the primary storage to a secondary (S3 cross-region replication, rclone, etc.)
+
+### How do I migrate backups between providers?
+
+DBdock doesn't have a built-in migrator. Options:
+
+- **AWS CLI / rclone** — copy files at the storage layer
+- **Manual** — `dbdock list`, download each, re-upload to new provider
+- **Accept split history** — switch providers, new backups go to the new location, old ones stay where they are
+
+### Do backups work with S3 Object Lock?
+
+Yes. Object Lock is set at the bucket level; DBdock just writes objects. Be aware that retention policies (`dbdock cleanup`) can't delete locked objects, so coordinate the two retention systems.
+
+## Encryption
+
+### What's the encryption algorithm?
+
+AES-256-GCM. Key derived via PBKDF2 with 100,000 iterations.
+
+### Can I use multiple encryption keys?
+
+Not simultaneously. DBdock reads one key at a time. For rotating keys, see [Key rotation](/guides/key-rotation).
+
+### Can I disable encryption for some backups?
+
+Yes — pass `--no-encrypt`:
+
+```bash
+npx dbdock backup --no-encrypt
+```
+
+### Does encryption slow backups down?
+
+Measurably, but not dramatically. AES-256 on modern CPUs is fast (AES-NI hardware acceleration). Most of the time is still spent in network/compression, not crypto.
+
+## Migration
+
+### Can I migrate MongoDB to PostgreSQL?
+
+Yes. See [Migration overview](/migration/overview).
+
+### Can I migrate MySQL / SQL Server / Oracle?
+
+Not yet. Current support is PostgreSQL and MongoDB in either direction.
+
+### What about live replication?
+
+DBdock migration is batch-oriented — not live replication. For CDC-style streaming, use Debezium, Airbyte, or similar.
+
+## Development
+
+### Does DBdock have a TypeScript SDK?
+
+Yes. All programmatic APIs have TypeScript definitions. See [SDK overview](/sdk/overview).
+
+### Can I extend DBdock with custom storage providers?
+
+Currently the four built-in providers (local, S3, R2, Cloudinary) are hardcoded. Adding a new provider means contributing a new adapter — [open a PR](https://github.com/dbdock/dbdock/pulls).
+
+### Where do I report bugs?
+
+- [GitHub issues](https://github.com/dbdock/dbdock/issues)
+- Security issues privately via [security advisory](https://github.com/dbdock/dbdock/security/advisories/new)
+
+## Pricing / hosting
+
+### Is there a hosted DBdock?
+
+Not currently. DBdock is a self-hosted CLI. You provide the compute, DBdock provides the logic.
+
+### Is there a GUI?
+
+Not currently. The CLI has interactive pickers for many operations. For a web dashboard, follow [issue tracker](https://github.com/dbdock/dbdock/issues).
+
+## Still have questions?
+
+<CardGroup cols={2}>
+  <Card title="GitHub Discussions" icon="comments" href="https://github.com/dbdock/dbdock/discussions">
+    Ask the community.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/help/troubleshooting">
+    Common issues.
+  </Card>
+</CardGroup>

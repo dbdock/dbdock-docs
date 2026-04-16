@@ -1,0 +1,109 @@
+---
+title: 'dbdock copydb'
+description: 'Copy a PostgreSQL database between two URLs — no config, no backup file.'
+---
+
+```bash
+npx dbdock copydb <source-url> <target-url> [options]
+```
+
+`copydb` is the "I just need to move this database" command. No config file. No intermediate backup file. Just paste two URLs and go.
+
+## Quick example
+
+```bash
+npx dbdock copydb \
+  "postgresql://user:pass@prod.example.com:5432/myapp" \
+  "postgresql://user:pass@staging.example.com:5432/myapp"
+```
+
+## What it does
+
+1. Tests both connections
+2. Shows source database size and table count
+3. Warns if the target has existing data
+4. Asks for confirmation
+5. Streams `pg_dump` directly into `pg_restore` — no temp files, no waiting
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--schema-only` | Copy tables, indexes, constraints — no data |
+| `--data-only` | Copy data only (schema must already exist on target) |
+| `--verbose` | Show detailed pg_dump/pg_restore output |
+| `--driver` | Use direct PostgreSQL driver instead of `pg_dump`. Required for serverless/modified Postgres (Neon, Supabase pooler, PlanetScale Postgres, etc.) |
+
+## Common use cases
+
+### Refresh staging from production
+
+```bash
+npx dbdock copydb "$PROD_URL" "$STAGING_URL"
+```
+
+### Promote staging to production
+
+```bash
+npx dbdock copydb "$STAGING_URL" "$PROD_URL"
+```
+
+### Pull production down to local for debugging
+
+```bash
+npx dbdock copydb "$PROD_URL" "postgresql://postgres:pass@localhost:5432/myapp"
+```
+
+### Align schema across environments
+
+```bash
+npx dbdock copydb --schema-only "$PROD_URL" "$STAGING_URL"
+```
+
+## The `--driver` flag
+
+Some serverless Postgres services (Neon, Supabase pooler, and others that use modified Postgres) reject `pg_dump` because it requires specific superuser operations or exact version matches.
+
+If you hit errors like:
+
+```
+pg_dump: error: server version: 15.3; pg_dump version: 14.9
+```
+
+or
+
+```
+pg_dump: error: could not connect to server
+```
+
+...use the `--driver` flag to use DBdock's direct Postgres client instead:
+
+```bash
+npx dbdock copydb --driver "$NEON_URL" "$LOCAL_URL"
+```
+
+<Warning>
+The driver mode does not support all `pg_dump` features (e.g., function/procedure bodies for non-PL/pgSQL languages). Use `pg_dump` mode when possible.
+</Warning>
+
+## Safety
+
+`copydb` refuses to proceed silently when the target database has data. You'll see a confirmation prompt listing target size and table count before anything writes.
+
+If you're scripting this in CI, wrap it with an explicit empty target:
+
+```bash
+psql "$TARGET_URL" -c "DROP DATABASE IF EXISTS myapp; CREATE DATABASE myapp;"
+npx dbdock copydb "$SOURCE_URL" "$TARGET_URL"
+```
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Staging refresh guide" icon="sync" href="/guides/staging-refresh">
+    End-to-end workflow for syncing environments.
+  </Card>
+  <Card title="Cross-database migration" icon="arrows-left-right" href="/migration/overview">
+    Moving between MongoDB and Postgres.
+  </Card>
+</CardGroup>

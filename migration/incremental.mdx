@@ -1,0 +1,100 @@
+---
+title: 'Incremental migration'
+description: 'Pull only new or changed data after an initial migration.'
+---
+
+Once you've done an initial migration, you usually want to keep the target in sync with the source as new data arrives. `--incremental` lets you pull only data newer than a cutoff.
+
+## Basic usage
+
+```bash
+npx dbdock migrate "$SRC" "$DST" --incremental --since "2026-04-01T00:00:00Z"
+```
+
+`--since` is the cutoff — DBdock ignores anything older than this timestamp.
+
+## How "changed" is determined
+
+DBdock looks for timestamp fields on each source table/collection:
+
+- MongoDB: `updated_at`, `createdAt`, or the `ObjectId` embedded timestamp
+- PostgreSQL: `updated_at`, `created_at`, or any `timestamptz` column named `*_at`
+
+If DBdock can't find a suitable field, it falls back to insert-only mode (new rows only, updates are missed).
+
+## Recommended pattern
+
+<Steps>
+  <Step title="Initial full migration">
+    ```bash
+    npx dbdock migrate "$SRC" "$DST" --export-config ./migration.json
+    ```
+    Record the timestamp you finished — you'll use it as the next `--since`.
+  </Step>
+  <Step title="Store the last-run timestamp">
+    ```bash
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > .dbdock-last-sync
+    ```
+  </Step>
+  <Step title="Incremental syncs">
+    ```bash
+    LAST=$(cat .dbdock-last-sync)
+    npx dbdock migrate "$SRC" "$DST" --config ./migration.json --incremental --since "$LAST"
+    date -u +%Y-%m-%dT%H:%M:%SZ > .dbdock-last-sync
+    ```
+  </Step>
+  <Step title="Automate on a cron">
+    Run the incremental sync hourly or daily depending on how fresh the target needs to be.
+  </Step>
+</Steps>
+
+## Caveats
+
+### Deletes aren't detected
+
+Incremental migration pulls inserts and updates. **Deletes in the source are not reflected in the target.** If you need full mirroring including deletes:
+
+- Do periodic full re-migrations (e.g., weekly full + hourly incremental)
+- Or use a dedicated CDC tool (Debezium, etc.) if the use case is live replication
+
+### Clock drift
+
+`--since` uses the source database's timestamps. If source and target clocks drift, you may miss rows or duplicate some. Prefer timestamps from the source over wall-clock times from the runner.
+
+### Primary keys must be stable
+
+Incremental updates rely on matching rows between source and target. If IDs change or are regenerated on each sync, updates will behave as inserts and duplicates will appear.
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Ongoing MongoDB → Postgres" icon="database">
+    Gradual migration — apps still write to Mongo, analytics queries hit Postgres.
+  </Card>
+  <Card title="Read-replica style" icon="copy">
+    Keep a Postgres reporting database fresh from the MongoDB primary.
+  </Card>
+  <Card title="Staging refresh" icon="sync">
+    Daily pull of new prod data into a staging DB.
+  </Card>
+  <Card title="Backup-by-replication" icon="shield-check">
+    Keep an out-of-region mirror updated regularly.
+  </Card>
+</CardGroup>
+
+## When NOT to use incremental
+
+- **Schema changed in the source.** Incremental mode assumes the schema is stable. For schema changes, do a full migration.
+- **You need strong consistency.** Incremental has a window where source ≠ target. For financial/compliance work, use transactional replication.
+- **Write throughput is very high.** Incremental can't keep up past a certain write rate. Use dedicated CDC.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock migrate" icon="arrows-left-right" href="/migration/migrate">
+    Full migration command.
+  </Card>
+  <Card title="Dry runs" icon="vials" href="/migration/dry-run">
+    Validate before running.
+  </Card>
+</CardGroup>

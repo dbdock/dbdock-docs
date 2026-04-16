@@ -1,0 +1,164 @@
+---
+title: 'Scheduling backups (SDK)'
+description: 'Build a scheduled backup runner with node-cron.'
+---
+
+DBdock doesn't ship its own daemon — pair the SDK with [`node-cron`](https://www.npmjs.com/package/node-cron) for programmatic scheduling.
+
+## Install
+
+```bash
+npm install node-cron
+npm install --save-dev @types/node-cron  # TypeScript
+```
+
+## Minimal scheduler
+
+```javascript
+const { createDBDock, BackupService } = require('dbdock');
+const cron = require('node-cron');
+
+async function main() {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  cron.schedule('0 2 * * *', async () => {
+    try {
+      const result = await backups.createBackup({
+        compress: true,
+        encrypt: true,
+      });
+      console.log(`Backup ${result.metadata.id} completed`);
+    } catch (err) {
+      console.error('Backup failed:', err);
+    }
+  });
+
+  console.log('Scheduler started — daily backups at 02:00');
+}
+
+main();
+```
+
+Keep this process alive with PM2, systemd, or Docker.
+
+## TypeScript version
+
+```typescript
+import { createDBDock, BackupService, type BackupResult } from 'dbdock';
+import * as cron from 'node-cron';
+
+async function startScheduler(): Promise<void> {
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  cron.schedule('0 2 * * *', async () => {
+    try {
+      const result: BackupResult = await backups.createBackup({
+        compress: true,
+        encrypt: true,
+      });
+      console.log(`✅ ${result.metadata.id} (${result.metadata.formattedSize})`);
+    } catch (err) {
+      console.error('❌ Backup failed:', err);
+    }
+  });
+}
+
+startScheduler().catch(console.error);
+```
+
+## Reading schedules from config
+
+If you want to read schedules defined via `dbdock schedule`, load them from `dbdock.config.json`:
+
+```javascript
+const fs = require('fs');
+const { createDBDock, BackupService } = require('dbdock');
+const cron = require('node-cron');
+
+async function main() {
+  const config = JSON.parse(fs.readFileSync('dbdock.config.json', 'utf8'));
+  const dbdock = await createDBDock();
+  const backups = dbdock.get(BackupService);
+
+  for (const schedule of config.schedules ?? []) {
+    if (!schedule.enabled) continue;
+
+    cron.schedule(schedule.cron, async () => {
+      console.log(`[${schedule.name}] Running backup`);
+      try {
+        await backups.createBackup({ compress: true, encrypt: true });
+      } catch (err) {
+        console.error(`[${schedule.name}] Failed:`, err);
+      }
+    });
+
+    console.log(`Registered: ${schedule.name} (${schedule.cron})`);
+  }
+}
+
+main();
+```
+
+## Running alongside your app
+
+Embed the scheduler in your existing Node.js service — no separate process needed:
+
+```javascript
+// server.ts
+import express from 'express';
+import { startBackupScheduler } from './backup-scheduler';
+
+const app = express();
+// ... routes ...
+
+app.listen(3000, async () => {
+  await startBackupScheduler();
+  console.log('Server + scheduler running');
+});
+```
+
+Downside: if your app restarts (deploy, crash), scheduled backups may be missed during the restart window. For mission-critical backups, use a separate process or cloud scheduler instead.
+
+## Multiple schedules
+
+```javascript
+cron.schedule('0 * * * *', async () => {
+  await backups.createBackup({ type: 'data', compress: true });  // hourly data-only
+});
+
+cron.schedule('0 2 * * *', async () => {
+  await backups.createBackup({ type: 'full', compress: true, encrypt: true });  // daily full
+});
+
+cron.schedule('0 0 * * 0', async () => {
+  await backups.createBackup({ type: 'full', compressionLevel: 11 });  // weekly archival
+});
+```
+
+Mix frequencies and formats for a tiered backup strategy.
+
+## Graceful shutdown
+
+```javascript
+const scheduled = cron.schedule('0 2 * * *', async () => { /* ... */ });
+
+process.on('SIGTERM', () => {
+  scheduled.stop();
+  process.exit(0);
+});
+```
+
+Without this, a scheduled job mid-execution gets killed along with the process.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Scheduling overview" icon="clock" href="/alerts/scheduling">
+    All scheduling options compared.
+  </Card>
+  <Card title="Creating backups" icon="download" href="/sdk/creating-backups">
+    `BackupService.createBackup()` details.
+  </Card>
+</CardGroup>

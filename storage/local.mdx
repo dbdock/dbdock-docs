@@ -1,0 +1,107 @@
+---
+title: 'Local storage'
+description: 'Store backups on the local filesystem.'
+---
+
+Local storage writes backups to a directory on disk. It's the fastest option and requires no cloud account.
+
+## Configuration
+
+```json
+{
+  "storage": {
+    "provider": "local",
+    "local": {
+      "path": "./backups"
+    }
+  }
+}
+```
+
+Or via environment:
+
+```bash
+STORAGE_PROVIDER=local
+STORAGE_LOCAL_PATH=./backups
+```
+
+## File layout
+
+```
+./backups/
+  dbdock_backups/
+    backup-2026-04-16-08-00-00-abc123.sql
+    backup-2026-04-16-08-00-00-abc123.meta.json
+    ...
+```
+
+## Recommended practices
+
+### Directory permissions
+
+Owner-only access:
+
+```bash
+chmod 700 ./backups
+```
+
+### Use an absolute path in production
+
+Relative paths resolve from wherever DBdock is invoked, which gets confusing fast:
+
+```json
+{
+  "storage": {
+    "provider": "local",
+    "local": { "path": "/var/backups/myapp" }
+  }
+}
+```
+
+### Enable filesystem encryption
+
+Local backups are not encrypted by DBdock if the `encryption` config is off. Rely on disk encryption (LUKS, FileVault, BitLocker) or enable DBdock's encryption layer for defense in depth.
+
+### Watch disk space
+
+Local backups accumulate. Set a retention policy:
+
+```json
+{
+  "backup": {
+    "retention": {
+      "enabled": true,
+      "maxBackups": 14,
+      "maxAgeDays": 14,
+      "minBackups": 3,
+      "runAfterBackup": true
+    }
+  }
+}
+```
+
+## When local is the right choice
+
+- Single-server setup with dedicated backup disk
+- Development and testing
+- Staging databases you don't mind losing in a host failure
+- A first hop before syncing to cloud (e.g., rsync to another host)
+
+## When local is the wrong choice
+
+- **Production data you can't afford to lose.** If the server dies, the backups die with it.
+- **Multi-server deployments.** Backups get fragmented across hosts.
+- **Compliance environments.** Audit trails are usually easier with object storage.
+
+Pair local with a cloud provider for disaster recovery — take backups locally for speed, then sync to S3/R2 on a schedule.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    Offsite backup destination.
+  </Card>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Cheaper cloud alternative.
+  </Card>
+</CardGroup>
