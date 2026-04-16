@@ -3,8 +3,8 @@
   "theme": "mint",
   "name": "DBdock",
   "logo": {
-    "light": "/images/logo.png",
-    "dark": "/images/logo.png"
+    "light": "/images/logo-primary.png",
+    "dark": "/images/logo-white.png"
   },
   "css": [
     "global.css"
