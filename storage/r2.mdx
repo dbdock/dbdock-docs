@@ -115,6 +115,10 @@ Example: 100 MB daily backup, 30-day retention, 3 restores/month (300 MB egress)
 
 Small numbers individually, but over many databases and many months the egress difference matters.
 
+## Protecting backups from deletion
+
+DBDock soft-deletes to a recycle bin and refuses deletes outside its own prefixes by default. For bucket-level protection, also enable **R2 object versioning** so deletes become recoverable delete-markers. See [Deletion safety](/storage/deletion-safety).
+
 ## See also
 
 <CardGroup cols={2}>

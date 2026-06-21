@@ -1,0 +1,98 @@
+---
+title: 'Deletion safety'
+description: 'How DBDock protects backups in object storage from accidental or runaway deletion.'
+---
+
+Backups are only useful if they are still there when you need them. DBDock applies
+several layers of protection so that retention, cleanup, and manual deletes can
+never remove the wrong object — and so that a delete can be undone.
+
+## What is protected
+
+Every delete that DBDock performs against object storage (S3, Cloudflare R2,
+Cloudinary, or local) passes through a guard before anything is removed. This
+covers automatic retention, WAL cleanup, and the `dbdock delete` / `dbdock cleanup`
+commands, on both DBDock-managed storage and your own buckets.
+
+## Layer 1 — Delete guard
+
+Before any object is deleted, the key is validated and checked against an
+allow-list of DBDock-owned prefixes:
+
+- **Structural checks** — empty keys, surrounding whitespace, leading slashes,
+  folder-style keys (`.../`), path traversal (`..`), and wildcards are refused.
+- **Prefix allow-list** — keys must live under a DBDock prefix
+  (`backups/`, `wal/`, `dbdock_backups/`, or `backup-`). Anything outside the
+  namespace DBDock created is never a deletion target.
+- **Circuit breaker** — a single run cannot delete more than
+  `maxDeletesPerWindow` objects within a rolling window (default 1000 per
+  minute), so a bug in a retention policy can't cascade into wiping a bucket.
+
+If a check fails, the delete is refused and the object is left untouched.
+
+## Layer 2 — Recycle bin
+
+Deletes are **soft by default**. Instead of being removed immediately, an object
+is copied to a `.trash/<timestamp>/` prefix (a fast server-side copy on S3/R2)
+and only then removed from its original location. A small `.trashmeta.json`
+sidecar records the original key, the time, and the reason.
+
+Trashed objects are hard-purged automatically once they are older than
+`trashRetentionDays` (default 14 days), and can be restored before then.
+
+```ts
+const storage = app.get(StorageService);
+const restoredKey = await storage.restoreFromTrash(
+  '.trash/2026-06-19T22-31-00-000Z/backups/db/2026-06-19/abc.sql.gz',
+);
+```
+
+## Layer 3 — Bucket versioning (recommended for R2/S3)
+
+The recycle bin lives inside the same bucket. For protection against bucket-level
+mistakes (a bad lifecycle rule, a compromised key, an accidental bucket action),
+enable **object versioning** on the bucket itself so deletes become recoverable
+delete-markers.
+
+<Steps>
+  <Step title="Enable versioning">
+    In the Cloudflare dashboard open **R2 → your bucket → Settings → Object
+    versioning** and turn it on. On AWS S3, enable **Bucket Versioning** under
+    the bucket's **Properties**.
+  </Step>
+  <Step title="Add a lifecycle rule">
+    Add a lifecycle rule to expire **non-current** versions after a retention
+    window (for example 30 days) so old versions don't accumulate cost.
+  </Step>
+  <Step title="Use a least-privilege key">
+    Give DBDock an API token scoped to a single bucket with only the object
+    read/write/delete permissions it needs — not account-wide access.
+  </Step>
+</Steps>
+
+## Configuration
+
+All of layer 1 and layer 2 are on by default. Tune them under
+`storage.deletionSafety`:
+
+```json
+{
+  "storage": {
+    "provider": "r2",
+    "deletionSafety": {
+      "enabled": true,
+      "recycleBin": true,
+      "trashRetentionDays": 14,
+      "maxDeletesPerWindow": 1000
+    }
+  }
+}
+```
+
+| Field | Default | Description |
+|---|---|---|
+| `enabled` | `true` | Master switch for the guard and allow-list. |
+| `recycleBin` | `true` | Soft-delete to `.trash/` instead of deleting immediately. |
+| `trashRetentionDays` | `14` | Days a trashed object is kept before it is purged. |
+| `maxDeletesPerWindow` | `1000` | Circuit-breaker limit per rolling minute. |
+| `allowedPrefixes` | DBDock roots | Override the protected prefix allow-list. |

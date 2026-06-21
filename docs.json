@@ -71,7 +71,8 @@
               "storage/local",
               "storage/s3",
               "storage/r2",
-              "storage/cloudinary"
+              "storage/cloudinary",
+              "storage/deletion-safety"
             ]
           },
           {
