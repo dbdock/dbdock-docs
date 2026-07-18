@@ -1,0 +1,49 @@
+---
+title: "dbdock account"
+description: "Show your DBDock plan and the limits that apply to your account — connections, backups, schedules, storage, alerts, and team size."
+icon: "user"
+---
+
+```bash
+npx dbdock account [options]
+```
+
+Prints your current plan and the limits that come with it. Handy for checking what you're entitled to before configuring schedules, storage, or alerts. Requires a signed-in account ([`dbdock login`](/cli/login)).
+
+## Quick example
+
+```bash
+dbdock account
+```
+
+```
+Account: you@example.com
+Plan:    pro
+
+Limits:
+  Connections:      unlimited
+  Backups / month:  unlimited
+  Schedules:        unlimited
+  Encrypted backups: yes
+  Managed storage:  50 GB
+  Alerts:           unlimited
+  Alert channels:   email, slack, webhook
+  Team members:     5
+```
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--profile <name>` | Use a specific saved profile instead of the active one |
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock storage" icon="chart-simple" href="/cli/storage">
+    Managed storage usage and quota.
+  </Card>
+  <Card title="dbdock alert" icon="bell" href="/cli/alert">
+    Manage cloud alert channels and rules.
+  </Card>
+</CardGroup>

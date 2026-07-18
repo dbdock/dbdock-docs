@@ -1,0 +1,87 @@
+---
+title: 'DBDock Storage'
+description: 'Managed backup storage included with your plan — no bucket, no keys.'
+---
+
+DBDock Storage is managed object storage that ships with your DBDock plan. Pick it in `dbdock init` and backups upload straight to your quota — you never create a bucket or paste an access key.
+
+<Note>
+DBDock Storage needs a signed-in account. Run `dbdock login` first. It's available on Pro and Business plans, with a small free-tier allowance for trying it out.
+</Note>
+
+## How it works
+
+The CLI never holds the storage bucket's credentials. Every upload and download goes through a short-lived presigned URL that the DBDock backend issues for your account only:
+
+1. `dbdock backup` writes the finished backup to a temp file.
+2. The CLI asks the backend for a presigned upload URL. The backend checks your quota and scopes the object to your account's private prefix.
+3. The CLI uploads directly to storage using that URL, then removes the temp file.
+4. `dbdock restore` reverses it with a presigned download URL.
+
+Because keys are scoped server-side, one account can never read or write another account's backups.
+
+## Setup
+
+```bash
+npx dbdock login       # one-time browser sign-in
+npx dbdock init        # choose "DBDock Storage (recommended)"
+```
+
+`init` activates managed storage for your account and shows your current quota. The written `dbdock.config.json` is just:
+
+```json
+{
+  "storage": {
+    "provider": "managed"
+  }
+}
+```
+
+No secrets land in the config file or `.env`.
+
+## Everyday use
+
+```bash
+npx dbdock backup      # uploads to your managed quota
+npx dbdock list        # lists your managed backups
+npx dbdock restore     # restores from a managed backup
+npx dbdock storage     # shows usage vs. quota
+npx dbdock delete      # removes a managed backup
+```
+
+## Quotas
+
+Usage is measured from what's actually stored, so CLI and dashboard backups both count. Quota by plan:
+
+| Plan | Included storage |
+|---|---|
+| Free | 1 GB |
+| Pro | 50 GB |
+| Business | 500 GB |
+
+When a backup would push you over quota, the upload is refused before anything is stored. Free up space with `dbdock delete` or `dbdock cleanup`, or upgrade your plan.
+
+## When to use it
+
+- You want backups offsite without running your own bucket.
+- You don't want storage keys living in config files or CI secrets.
+- You already pay for DBDock and would rather not add a separate storage bill.
+
+## When to use your own bucket instead
+
+- You need backups in a specific region, account, or compliance boundary you control.
+- You want to keep more data than your plan's quota allows.
+- You have existing lifecycle or replication rules on your bucket.
+
+In those cases pick [S3](/storage/s3), [R2](/storage/r2), or [local](/storage/local) in `init`.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="dbdock storage" icon="chart-simple" href="/cli/storage">
+    Check your usage and quota.
+  </Card>
+  <Card title="dbdock account" icon="user" href="/cli/account">
+    See your plan and limits.
+  </Card>
+</CardGroup>

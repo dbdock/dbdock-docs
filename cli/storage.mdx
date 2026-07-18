@@ -1,0 +1,48 @@
+---
+title: "dbdock storage"
+description: "Show how much DBDock managed storage you've used against your plan's quota."
+icon: "chart-simple"
+---
+
+```bash
+npx dbdock storage [options]
+```
+
+Shows your [DBDock Storage](/storage/managed) usage against your plan's quota. Requires a signed-in account ([`dbdock login`](/cli/login)).
+
+## Quick example
+
+```bash
+dbdock storage
+```
+
+```
+DBDock Managed Storage
+  [████░░░░░░░░░░░░░░░░░░░░] 12%
+  118.4 MB of 1.0 GB used (1 GB plan)
+```
+
+Usage is measured from what's actually stored, so both CLI and dashboard backups count toward it.
+
+## Notes
+
+- If managed storage isn't on your plan, the command explains how to upgrade.
+- If you haven't activated it yet, run [`dbdock init`](/cli/init) and choose **DBDock Storage**.
+- At 90%+ usage, the command warns you to free up space or upgrade.
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--profile <name>` | Use a specific saved profile instead of the active one |
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="DBDock Storage" icon="database" href="/storage/managed">
+    How managed storage works.
+  </Card>
+  <Card title="dbdock account" icon="user" href="/cli/account">
+    Your plan and limits.
+  </Card>
+</CardGroup>

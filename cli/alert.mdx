@@ -1,0 +1,69 @@
+---
+title: "dbdock alert"
+description: "Manage DBDock Cloud notification channels and alert rules from the CLI — the same alerts you'd configure in the dashboard."
+icon: "bell"
+---
+
+```bash
+npx dbdock alert [action] [options]
+```
+
+Manages the cloud notification channels and alert rules on your account — the same ones you'd set up in the dashboard. Requires a signed-in account ([`dbdock login`](/cli/login)). Channel types and rule counts depend on your plan; see [`dbdock account`](/cli/account).
+
+## Actions
+
+| Action | What it does |
+|---|---|
+| `list` (default) | List your channels and alert rules |
+| `add` | Add a notification channel (email, Slack, or webhook) |
+| `rule` | Add an alert rule that notifies a channel on an event |
+| `test` | Send a test notification to a channel |
+| `remove` | Remove a channel or rule |
+
+## Quick examples
+
+```bash
+dbdock alert                 # list channels and rules
+dbdock alert add             # add a channel (interactive)
+dbdock alert rule            # notify a channel on backup failure
+dbdock alert test            # send a test to a channel
+dbdock alert remove          # remove a channel or rule
+```
+
+```
+Notification channels:
+  Ops Slack  [slack]  6f2c...
+
+Alert rules:
+  Nightly failures  on backup_failure  →  Ops Slack
+```
+
+## Events
+
+Alert rules can trigger on:
+
+- `backup_success` — a backup completed
+- `backup_failure` — a backup failed
+- `schedule_missed` — a schedule didn't run on time
+- `storage_error` — a storage upload or download failed
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--profile <name>` | Use a specific saved profile instead of the active one |
+
+<Note>
+`add`, `rule`, `test`, and `remove` are interactive and need a terminal (TTY).
+</Note>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Alerts overview" icon="bell" href="/alerts/overview">
+    How DBDock alerting works.
+  </Card>
+  <Card title="dbdock account" icon="user" href="/cli/account">
+    Which channels your plan allows.
+  </Card>
+</CardGroup>

@@ -3,9 +3,12 @@ title: 'Storage overview'
 description: 'Choose where DBDock puts your backups.'
 ---
 
-DBDock supports four storage backends, all exposed through the same config shape and all swappable without re-configuring backups.
+DBDock supports five storage backends, all exposed through the same config shape and all swappable without re-configuring backups.
 
 <CardGroup cols={2}>
+  <Card title="DBDock Storage" icon="database" href="/storage/managed">
+    Managed storage included with your plan — no bucket, no keys. Recommended.
+  </Card>
   <Card title="Local disk" icon="folder" href="/storage/local">
     Filesystem storage — fastest, no network, no cost.
   </Card>
@@ -24,6 +27,7 @@ DBDock supports four storage backends, all exposed through the same config shape
 
 | You want... | Use |
 |---|---|
+| Backups offsite with zero setup | DBDock Storage |
 | Fastest possible backup/restore | Local (if single server) |
 | Standard cloud backup with wide tool support | S3 |
 | Cheap cloud storage with no egress fees | R2 |

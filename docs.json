@@ -127,13 +127,17 @@
             "pages": [
               "cli/login",
               "cli/sync",
-              "cli/open"
+              "cli/open",
+              "cli/account",
+              "cli/storage",
+              "cli/alert"
             ]
           },
           {
             "group": "Storage Providers",
             "pages": [
               "storage/overview",
+              "storage/managed",
               "storage/local",
               "storage/s3",
               "storage/r2",
