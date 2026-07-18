@@ -1,5 +1,4 @@
-a[href="/"] img,
-a[href="/"] svg {
+a[href="/"] img {
   height: 1.75rem !important;
   max-height: 2rem !important;
   width: auto !important;
