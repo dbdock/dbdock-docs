@@ -1,0 +1,69 @@
+---
+title: "Encryption"
+description: "DBDock encrypts backups with AES-256-GCM and PBKDF2 key derivation. How to generate a key, where to store it, credential masking, and PostgreSQL .pgpass support."
+icon: "key"
+---
+
+DBDock encrypts backup files so that a stolen bucket or disk doesn't mean stolen data. Encryption happens after compression, inside the backup [pipeline](/core/concepts).
+
+## Algorithm
+
+- **AES-256-GCM** — authenticated encryption
+- Key derived from your encryption secret via **PBKDF2** (100,000 iterations by default)
+- A unique initialization vector (IV) per backup
+- The authentication tag is stored alongside the ciphertext
+
+Because GCM authenticates the ciphertext, a tampered backup fails to decrypt rather than silently returning corrupt data.
+
+## Generate an encryption key
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+The key must be exactly **64 hexadecimal characters** (`0`–`9`, `a`–`f`).
+
+## Where to store the key
+
+<CardGroup cols={2}>
+  <Card title="Do" icon="check">
+    A password manager, secret vault, or cloud KMS. Somewhere separate from the backups.
+  </Card>
+  <Card title="Don't" icon="xmark">
+    In the backup destination, or in your repository. An attacker with your bucket must not also get the key.
+  </Card>
+</CardGroup>
+
+<Warning>
+  **Losing the key means losing the backup.** There is no recovery path for an encrypted backup without its key. Store the key safely — and redundantly — before you rely on encryption in production.
+</Warning>
+
+## Rotating the key
+
+The short version: decrypt old backups with the old key, re-encrypt with the new one. See the full [Key rotation guide](/guides/key-rotation) for the procedure.
+
+## Encryption in DBDock Cloud
+
+DBDock Cloud uses the same AES-256-GCM scheme. On paid plans, encryption is enabled by default for new backups. If you download an encrypted backup to restore it elsewhere, you'll need the encryption secret — treat it with the same care as above. See [Key management](/security/key-management).
+
+## Credential masking
+
+DBDock masks credentials in log output by default:
+
+```text
+Connecting to postgresql://postgres:****@host:5432/db
+```
+
+This helps prevent accidental leaks when sharing logs.
+
+## PostgreSQL `.pgpass`
+
+For host-level credential isolation with PostgreSQL, use the native `.pgpass` file:
+
+```bash
+touch ~/.pgpass
+chmod 600 ~/.pgpass
+echo "host:port:database:user:password" >> ~/.pgpass
+```
+
+DBDock uses `.pgpass` automatically when present. Environment variables take priority if both are set. `.pgpass` is handy when multiple tools share credentials, or you want OS file permissions gating access.

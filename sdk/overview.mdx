@@ -1,9 +1,9 @@
 ---
 title: 'SDK overview'
-description: 'Use DBdock programmatically in your Node.js app.'
+description: 'Use DBDock programmatically in your Node.js app.'
 ---
 
-Everything the CLI does, you can do from code. DBdock exports a small NestJS-based module that works with any Node.js backend — you don't need to understand NestJS to use it.
+Everything the CLI does, you can do from code. DBDock exports a small NestJS-based module that works with any Node.js backend — you don't need to understand NestJS to use it.
 
 ## Install
 
@@ -33,7 +33,7 @@ main().catch(console.error);
 
 Three steps:
 
-1. `await createDBDock()` — initializes DBdock (reads `dbdock.config.json` and env vars)
+1. `await createDBDock()` — initializes DBDock (reads `dbdock.config.json` and env vars)
 2. `dbdock.get(ServiceClass)` — fetches the service you need
 3. Call methods on the service
 
@@ -56,7 +56,7 @@ Three steps:
 
 ## TypeScript support
 
-DBdock ships full type definitions. In TypeScript:
+DBDock ships full type definitions. In TypeScript:
 
 ```typescript
 import { createDBDock, BackupService, type BackupMetadata } from 'dbdock';

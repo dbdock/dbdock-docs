@@ -1,0 +1,69 @@
+---
+title: "Security Overview"
+description: "How DBDock protects your databases, credentials, and backups — encryption by default, secrets kept out of config, tenant isolation in the cloud, and metadata-only sync."
+icon: "shield"
+---
+
+DBDock handles sensitive things: database credentials, storage keys, and the contents of your backups. Security isn't a feature bolted on — it shapes how both the CLI and the cloud are built. This page is the map; each area links to the details.
+
+## Principles
+
+<CardGroup cols={2}>
+  <Card title="Encrypt by design" icon="lock">
+    Backups are encrypted with AES-256-GCM. On DBDock Cloud paid plans, encryption is on by default.
+  </Card>
+  <Card title="Secrets stay out of config" icon="file-shield">
+    Passwords and keys live in environment variables, never in `dbdock.config.json`. Config is safe to commit.
+  </Card>
+  <Card title="Metadata-only sync" icon="cloud-arrow-up">
+    Cloud Sync uploads configuration metadata, never credentials or backup contents.
+  </Card>
+  <Card title="Isolation in the cloud" icon="users-slash">
+    Your account's data is scoped to you. Requests are authenticated and access is confined to your own resources.
+  </Card>
+</CardGroup>
+
+## The three areas
+
+<CardGroup cols={3}>
+  <Card title="Encryption" icon="key" href="/security/encryption">
+    How backups are encrypted, credential masking, and `.pgpass`.
+  </Card>
+  <Card title="Cloud security" icon="cloud" href="/security/cloud">
+    Sign-in, data at rest, isolation, and the MCP server.
+  </Card>
+  <Card title="Key management" icon="vault" href="/security/key-management">
+    Where secrets should live, in CI and in production.
+  </Card>
+</CardGroup>
+
+## Secrets never live in the config file
+
+DBDock enforces a strict split between non-sensitive configuration and secrets:
+
+| Lives in `dbdock.config.json` (safe to commit) | Lives in the environment (never commit) |
+|---|---|
+| Host, port, database name, username | Database password |
+| Bucket names, regions, endpoints | Storage access/secret keys |
+| SMTP host, port, sender address | SMTP password |
+| "Slack enabled" flag | Slack webhook URL |
+| "Encryption enabled" flag | Encryption secret |
+
+This same split is what makes [Cloud Sync](/cloud-sync/data-handling) safe: the parts that are safe to commit are the parts that sync, and nothing else.
+
+## Credential masking
+
+DBDock masks credentials in log output by default, so pasting logs into an issue or sharing your screen doesn't leak a password:
+
+```text
+Connecting to postgresql://postgres:****@host:5432/db
+```
+
+## Reporting a vulnerability
+
+<Warning>
+  Please do **not** file public GitHub issues for security vulnerabilities.
+</Warning>
+
+- Use GitHub's [private vulnerability reporting](https://github.com/dbdock/dbdock/security/advisories/new), or
+- See [SECURITY.md](https://github.com/dbdock/dbdock/blob/main/SECURITY.md) for how to report and expected response times.

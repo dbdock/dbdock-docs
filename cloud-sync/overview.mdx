@@ -1,0 +1,76 @@
+---
+title: "Cloud Sync"
+description: "Link a local DBDock CLI project to your DBDock Cloud dashboard. Automate from the terminal, monitor from the browser — and keep secrets on your machine, because only metadata syncs."
+icon: "cloud-arrow-up"
+---
+
+Cloud Sync connects a local [CLI](/cli/overview) project to your [DBDock Cloud](/cloud/overview) account. Configure and run DBDock from the terminal, and see the same project — its connection, storage, schedules, and backup metadata — in the dashboard.
+
+<Note>
+  **Secrets stay on your machine.** Sync uploads only non-sensitive metadata. Database passwords, storage keys, encryption secrets, and webhook URLs are never sent. See [Data handling](/cloud-sync/data-handling).
+</Note>
+
+## Why link them
+
+<CardGroup cols={2}>
+  <Card title="Best of both" icon="scale-balanced">
+    Script and automate locally; monitor, share, and review from a managed dashboard.
+  </Card>
+  <Card title="One source of truth" icon="check">
+    Your `dbdock.config.json` stays authoritative. The dashboard mirrors it.
+  </Card>
+  <Card title="Team visibility" icon="users">
+    Give teammates a read on what's configured without sharing your machine.
+  </Card>
+  <Card title="Safe by design" icon="lock">
+    Metadata-only sync means linking a project never exports a credential.
+  </Card>
+</CardGroup>
+
+## How it works
+
+DBDock keeps a small `.dbdock/` folder in your project that records which cloud project this directory is linked to and the last state it synced. Running `dbdock sync` compares your local config to the cloud baseline and pushes the differences.
+
+```text
+your-project/
+├── dbdock.config.json   # your configuration (authoritative)
+└── .dbdock/
+    ├── config.json       # linked project id
+    ├── state.json        # last synced revision
+    └── conflicts/        # saved conflict snapshots, if any
+```
+
+<Steps>
+  <Step title="Sign in">
+    Run [`dbdock login`](/cli/login) to authenticate to DBDock Cloud in your browser.
+  </Step>
+  <Step title="Link the project">
+    Run [`dbdock init`](/cli/init) — it offers to link this directory to a cloud project. (Already have a config? It links the existing one.)
+  </Step>
+  <Step title="Sync">
+    Run [`dbdock sync`](/cli/sync) to push your local metadata to the dashboard. Use `dbdock open` to jump to it in the browser.
+  </Step>
+</Steps>
+
+## Everyday commands
+
+| Command | What it does |
+|---|---|
+| [`dbdock login`](/cli/login) | Sign in to DBDock Cloud |
+| `dbdock whoami` | Show the signed-in account |
+| [`dbdock sync`](/cli/sync) | Push local metadata to the cloud |
+| `dbdock sync status` | Compare local vs. cloud |
+| `dbdock sync pull` | Adopt the cloud baseline |
+| [`dbdock open`](/cli/open) | Open this project in the dashboard |
+| `dbdock logout` | Remove stored credentials |
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/cloud-sync/authentication">
+    Sign in, profiles, and tokens.
+  </Card>
+  <Card title="Syncing a project" icon="arrows-rotate" href="/cloud-sync/sync">
+    Push, pull, status, and conflicts.
+  </Card>
+</CardGroup>

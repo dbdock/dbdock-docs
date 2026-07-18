@@ -1,6 +1,6 @@
 ---
 title: 'Encryption key rotation'
-description: 'Safely rotate DBdock encryption keys without losing access to old backups.'
+description: 'Safely rotate DBDock encryption keys without losing access to old backups.'
 ---
 
 Encryption keys should rotate periodically — annually is a common cadence, more often if a key was potentially exposed. This guide walks through the rotation procedure.
@@ -43,7 +43,7 @@ Easiest and safest. Old backups keep their old key; new backups use the new key.
 
     If running in CI/CD or a secret manager, rotate it there.
   </Step>
-  <Step title="Restart any long-lived DBdock processes">
+  <Step title="Restart any long-lived DBDock processes">
     They cache the env at startup. `pm2 restart`, `kubectl rollout restart`, etc.
   </Step>
   <Step title="Verify">
@@ -63,11 +63,11 @@ If you want every backup to use the new key, do this after the forward-only rota
 
 <Steps>
   <Step title="Set up a restore environment">
-    Point DBdock at the **old** key temporarily, on a machine that can reach both the old backup storage and new backup storage.
+    Point DBDock at the **old** key temporarily, on a machine that can reach both the old backup storage and new backup storage.
   </Step>
   <Step title="For each old backup">
     - Restore the backup to a temporary database
-    - Switch DBdock to the new key
+    - Switch DBDock to the new key
     - Run `dbdock backup` against the temporary database
     - Verify the new backup restores cleanly
     - Drop the temporary database
@@ -96,7 +96,7 @@ Pick the old backup and let it run. Put the new key back when done.
 
 ## Multi-key scenarios
 
-DBdock reads a single encryption key at a time. If you need truly multi-key support (e.g., different keys per environment, automatic failover), consider wrapping DBdock in your own script that sets the correct key based on metadata.
+DBDock reads a single encryption key at a time. If you need truly multi-key support (e.g., different keys per environment, automatic failover), consider wrapping DBDock in your own script that sets the correct key based on metadata.
 
 ## Storing keys safely
 
@@ -122,14 +122,14 @@ When rotating:
 - [ ] New key generated and saved in secure storage
 - [ ] Old key archived (not deleted) with its active date range
 - [ ] Env updated in all environments (prod, staging, CI)
-- [ ] Long-lived DBdock processes restarted
+- [ ] Long-lived DBDock processes restarted
 - [ ] Smoke test passed (backup + restore with new key)
 - [ ] Team notified of the rotation date (for audit purposes)
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Security" icon="lock" href="/core/security">
+  <Card title="Security" icon="lock" href="/security/overview">
     Overall security best practices.
   </Card>
   <Card title="Production checklist" icon="list-check" href="/guides/production-checklist">

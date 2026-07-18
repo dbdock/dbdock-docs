@@ -3,7 +3,7 @@ title: 'Refresh staging from production'
 description: 'Keep staging databases current with production data using dbdock copydb.'
 ---
 
-One of the most common DBdock workflows: overnight, pull production data into staging so the team starts each day with realistic data.
+One of the most common DBDock workflows: overnight, pull production data into staging so the team starts each day with realistic data.
 
 ## The simple version
 
@@ -11,7 +11,7 @@ One of the most common DBdock workflows: overnight, pull production data into st
 npx dbdock copydb "$PROD_URL" "$STAGING_URL"
 ```
 
-That's it — `copydb` streams from source to target with no intermediate file. Confirm the prompt and DBdock takes care of the rest.
+That's it — `copydb` streams from source to target with no intermediate file. Confirm the prompt and DBDock takes care of the rest.
 
 ## Scheduled overnight refresh
 

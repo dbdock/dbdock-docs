@@ -1,0 +1,84 @@
+---
+title: "dbdock sync"
+description: "Synchronize a local DBDock project with DBDock Cloud — push local config metadata, check status, pull the cloud baseline, and resolve conflicts. Secrets never sync."
+icon: "arrows-rotate"
+---
+
+```bash
+npx dbdock sync [status|push|pull] [options]
+```
+
+Mirrors this project's configuration metadata to your DBDock Cloud dashboard. With no action, `sync` pushes local changes. For the concepts and workflow, see [Syncing a project](/cloud-sync/sync).
+
+<Note>
+  Only non-secret metadata is uploaded — passwords, keys, and webhook URLs stay local. See [Data handling](/cloud-sync/data-handling).
+</Note>
+
+## Prerequisites
+
+- Signed in with [`dbdock login`](/cli/login)
+- Project linked with [`dbdock init`](/cli/init)
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `dbdock sync` | Push local metadata to the cloud (default). |
+| `dbdock sync status` | Compare local vs. cloud — revisions, pending changes, last sync. |
+| `dbdock sync pull` | Adopt the cloud baseline as your local starting point. |
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--force` | Overwrite cloud state with local. Resolves a conflict in favor of your machine. |
+
+## Examples
+
+<CodeGroup>
+```bash Push
+dbdock sync
+# → Synced. 1 change set(s) pushed.
+```
+
+```bash Status
+dbdock sync status
+# Project:  proj_...
+# Local:    revision 7
+# Cloud:    revision 7
+# In sync.
+```
+
+```bash Resolve a conflict (keep local)
+dbdock sync --force
+```
+</CodeGroup>
+
+## Conflicts
+
+If the cloud has diverged from the baseline your machine last saw, `sync` stops and exits `1` rather than guess:
+
+```text
+Cloud has diverged from your local baseline (conflict).
+Resolve with `dbdock sync pull` (adopt cloud) or `dbdock sync --force` (overwrite cloud).
+```
+
+Conflict snapshots are saved under `.dbdock/conflicts/` so nothing is lost while you decide.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Synced, or already up to date |
+| `1` | Conflict, not authenticated, or no linked project |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="dbdock open" icon="up-right-from-square" href="/cli/open">
+    Jump to this project in the dashboard.
+  </Card>
+  <Card title="Cloud Sync overview" icon="cloud-arrow-up" href="/cloud-sync/overview">
+    The full picture.
+  </Card>
+</CardGroup>

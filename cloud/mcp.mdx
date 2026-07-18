@@ -1,0 +1,86 @@
+---
+title: "MCP Server"
+description: "Connect AI assistants like Claude and Cursor to DBDock Cloud over the Model Context Protocol — run backups, restores, copies, migrations, and schedules from your editor with secure OAuth sign-in."
+icon: "robot"
+---
+
+DBDock Cloud exposes a hosted [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server, so AI assistants can operate your DBDock account on your behalf — safely, with your permission, over secure OAuth sign-in.
+
+## Endpoint
+
+```text
+https://dbdock.xyz/api/mcp
+```
+
+The server uses the streamable HTTP transport and browser-based **OAuth** sign-in. There are no API keys to create or paste — you approve access in your browser, the same way you sign in to the dashboard.
+
+## Connect a client
+
+<Tabs>
+  <Tab title="Claude">
+    ```bash
+    claude mcp add --transport http dbdock https://dbdock.xyz/api/mcp
+    ```
+    Or add it to your MCP config:
+    ```json
+    {
+      "mcpServers": {
+        "dbdock": {
+          "type": "http",
+          "url": "https://dbdock.xyz/api/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Add to your MCP configuration:
+    ```json
+    {
+      "mcpServers": {
+        "dbdock": {
+          "url": "https://dbdock.xyz/api/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Other clients">
+    Any MCP client that supports the HTTP transport can connect. Point it at `https://dbdock.xyz/api/mcp` and complete the OAuth sign-in when prompted.
+  </Tab>
+</Tabs>
+
+The first time a client connects, your browser opens to authorize it. After that, the client acts within your DBDock account.
+
+## What the assistant can do
+
+Once connected, the assistant can call DBDock tools such as:
+
+<CardGroup cols={2}>
+  <Card title="list_connections" icon="plug">
+    See the databases in your account.
+  </Card>
+  <Card title="create_backup" icon="shield-check">
+    Start a backup of a connection.
+  </Card>
+  <Card title="restore_backup" icon="rotate-left">
+    Restore a backup into a database.
+  </Card>
+  <Card title="copy_database" icon="copy">
+    Clone one database into another.
+  </Card>
+  <Card title="run_migration" icon="arrows-left-right">
+    Run a cross-database migration.
+  </Card>
+  <Card title="list_schedules · run_schedule_now · set_schedule_enabled" icon="calendar-days">
+    Inspect and control schedules.
+  </Card>
+</CardGroup>
+
+<Warning>
+  MCP tools act on real databases. Backups, restores, and copies through the assistant have the same effect as running them in the dashboard — review what an assistant proposes before you approve it, especially restores and copies, which overwrite data.
+</Warning>
+
+## Security
+
+The MCP server authenticates every request through DBDock's OAuth flow and scopes access to your own account. It never exposes your database credentials to the client — the assistant asks DBDock to perform actions; it doesn't receive your secrets. See [Cloud security](/security/cloud).

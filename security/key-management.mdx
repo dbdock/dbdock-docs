@@ -1,0 +1,83 @@
+---
+title: "Key Management"
+description: "Where DBDock secrets should live — environment variables, secret vaults, and CI secret stores — plus strict mode, least-privilege storage credentials, and key rotation."
+icon: "vault"
+---
+
+DBDock's security model rests on one habit: **secrets live in the environment, not in files**. This page covers where to keep them and how to handle them in production and CI.
+
+## The config / secret split
+
+`dbdock.config.json` holds non-sensitive settings and is safe to commit. Secrets go in environment variables. See the full table in the [Security overview](/security/overview#secrets-never-live-in-the-config-file).
+
+## Strict mode
+
+Have DBDock refuse to run if any secret appears in the config file:
+
+```bash
+DBDOCK_STRICT_MODE=true
+```
+
+Use it in CI and production as a safety net against accidental secret leaks in `dbdock.config.json`.
+
+## Where secrets should live
+
+<CardGroup cols={2}>
+  <Card title="Local development" icon="laptop-code">
+    A gitignored `.env` file, or your OS keychain. Never commit `.env`.
+  </Card>
+  <Card title="Production" icon="server">
+    A secret manager or cloud KMS — AWS Secrets Manager, Vault, GCP Secret Manager, etc.
+  </Card>
+  <Card title="CI/CD" icon="gears">
+    Your CI provider's encrypted secret store (GitHub Actions secrets, GitLab CI variables). Inject at runtime.
+  </Card>
+  <Card title="Cloud sign-in" icon="key">
+    For the CLI in CI, use `DBDOCK_TOKEN` from a secret store. See [Authentication](/cloud-sync/authentication).
+  </Card>
+</CardGroup>
+
+## Least-privilege storage credentials
+
+Give DBDock only the permissions it needs. For AWS S3 or R2, a scoped policy is enough to put, get, list, and delete backups:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket", "s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::my-dbdock-backups",
+        "arn:aws:s3:::my-dbdock-backups/*"
+      ]
+    }
+  ]
+}
+```
+
+On the bucket, also enable server-side encryption, block public access, and turn on versioning for ransomware protection.
+
+## The encryption secret
+
+Your backup encryption secret deserves special care — it's the one value that, if lost, makes encrypted backups unrecoverable.
+
+<Warning>
+  Store the encryption secret **separately from the backups themselves**, and keep a redundant copy in a vault or password manager. See [Encryption](/security/encryption).
+</Warning>
+
+## Rotating keys
+
+Rotate on a schedule and after any suspected exposure. The [Key rotation guide](/guides/key-rotation) walks through rotating your encryption secret without losing access to old backups.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Encryption" icon="key" href="/security/encryption">
+    The crypto behind backups.
+  </Card>
+  <Card title="Data handling" icon="shield" href="/cloud-sync/data-handling">
+    What sync uploads.
+  </Card>
+</CardGroup>

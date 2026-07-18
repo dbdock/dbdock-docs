@@ -7,7 +7,7 @@ Backups accumulate. A retention policy decides what to keep and what to delete. 
 
 ## The three knobs
 
-Every DBdock retention policy combines three numbers:
+Every DBDock retention policy combines three numbers:
 
 | Field | What it does |
 |---|---|
@@ -122,18 +122,18 @@ High-churn databases where 24h RPO isn't enough. Run backups hourly:
 
 Daily snapshots with longer retention require either:
 
-- A separate DBdock config that writes to a different storage prefix with longer `maxAgeDays`
+- A separate DBDock config that writes to a different storage prefix with longer `maxAgeDays`
 - Or manual promotion — copy a daily backup to a "long-term" prefix outside `dbdock_backups/`
 
 ## Pattern 5 — grandfather-father-son (classic)
 
-Not natively supported by DBdock's 3-knob policy, but achievable with external tooling:
+Not natively supported by DBDock's 3-knob policy, but achievable with external tooling:
 
 - **Son (daily):** 7 days
 - **Father (weekly):** 4 weeks
 - **Grandfather (monthly):** 12 months
 
-Implement by running three separate DBdock configs to three separate storage prefixes, each with its own retention. Or use a cloud lifecycle rule on top of a single prefix.
+Implement by running three separate DBDock configs to three separate storage prefixes, each with its own retention. Or use a cloud lifecycle rule on top of a single prefix.
 
 ## Choosing values
 

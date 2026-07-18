@@ -1,0 +1,45 @@
+---
+title: "dbdock open"
+description: "Open the linked DBDock project in the cloud dashboard from your terminal, or print the URL for use over SSH."
+icon: "up-right-from-square"
+---
+
+```bash
+npx dbdock open [options]
+```
+
+Opens this project in the [DBDock Cloud](https://dbdock.xyz) dashboard in your browser. Useful right after a [`dbdock sync`](/cli/sync) to review what pushed.
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--print` | Print the dashboard URL instead of launching a browser. |
+
+## Examples
+
+<CodeGroup>
+```bash Open in browser
+dbdock open
+# → Opening https://dbdock.xyz/...
+```
+
+```bash Print the URL (e.g. over SSH)
+dbdock open --print
+```
+</CodeGroup>
+
+<Info>
+  `open` needs a linked project. If you see "No linked project," run [`dbdock init`](/cli/init) to link this directory first.
+</Info>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="dbdock sync" icon="arrows-rotate" href="/cli/sync">
+    Push before you open.
+  </Card>
+  <Card title="DBDock Cloud" icon="cloud" href="/cloud/overview">
+    What's in the dashboard.
+  </Card>
+</CardGroup>

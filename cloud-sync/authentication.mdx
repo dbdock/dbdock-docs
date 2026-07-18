@@ -1,0 +1,100 @@
+---
+title: "Authentication"
+description: "Sign in to DBDock Cloud from the CLI with browser OAuth, check your identity with whoami, use tokens for CI, and manage multiple accounts with profiles."
+icon: "key"
+---
+
+Before you can sync, the CLI needs to know who you are. DBDock uses browser-based **OAuth** — the same secure sign-in as the dashboard — so there's no long-lived API key to create or store in plaintext.
+
+## Sign in
+
+```bash
+dbdock login
+```
+
+This opens your browser to authorize the CLI. Once you approve, DBDock stores your credentials locally and confirms the account:
+
+```text
+Logged in as you@example.com (profile: default)
+```
+
+If the browser doesn't open automatically, the CLI prints a URL you can visit manually. Credentials are saved under your DBDock home directory (`~/.dbdock/`), not in your project.
+
+## Check who you are
+
+```bash
+dbdock whoami
+```
+
+```text
+User:    you@example.com
+ID:      user_...
+Auth:    oauth
+Org:     (none)
+Profile: default → https://api.dbdock.xyz/api/v1
+```
+
+## Sign out
+
+```bash
+dbdock logout
+```
+
+Removes the stored credentials for the active profile. Your project's `.dbdock/` link is left untouched — sign back in later and continue.
+
+## Tokens for CI
+
+Interactive browser sign-in isn't available in automation. For CI, provide a token instead:
+
+```bash
+dbdock login --token "$DBDOCK_TOKEN"
+# or set the environment variable and DBDock picks it up
+export DBDOCK_TOKEN="..."
+```
+
+<Warning>
+  Treat `DBDOCK_TOKEN` like any other secret — inject it from your CI provider's secret store, never commit it. See [Key management](/security/key-management).
+</Warning>
+
+## Multiple accounts with profiles
+
+If you work with more than one DBDock account (say, personal and work), use profiles:
+
+```bash
+dbdock login --profile work
+dbdock whoami --profile work
+dbdock logout --profile work
+```
+
+Each profile stores its own credentials and API endpoint. Commands use the `default` profile unless you pass `--profile`.
+
+## Organizations
+
+```bash
+dbdock switch-org --org <id>
+```
+
+Organizations are forward-compatible — accounts are single-scope today, and this command sets a value for when multi-org support ships. You can safely ignore it for now.
+
+## Environment variables
+
+<AccordionGroup>
+  <Accordion title="DBDOCK_TOKEN" icon="key">
+    A token to authenticate with instead of the browser flow. Useful in CI.
+  </Accordion>
+  <Accordion title="DBDOCK_API_URL" icon="link">
+    Override the API endpoint. Defaults to `https://api.dbdock.xyz/api/v1`.
+  </Accordion>
+  <Accordion title="DBDOCK_APP_URL" icon="window-maximize">
+    Override the dashboard URL used by `dbdock open`. Defaults to `https://dbdock.xyz`.
+  </Accordion>
+  <Accordion title="DBDOCK_HOME" icon="folder">
+    Where global credentials and config live. Defaults to `~/.dbdock`.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+<Card title="Sync a project" icon="arrows-rotate" href="/cloud-sync/sync" horizontal>
+  Now that you're signed in, push your project to the cloud.
+</Card>

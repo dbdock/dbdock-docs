@@ -7,7 +7,7 @@ description: 'View configured schedules and service health.'
 dbdock status
 ```
 
-Shows configured schedules and, if DBdock is running as a long-lived process (via PM2), the service health.
+Shows configured schedules and, if DBDock is running as a long-lived process (via PM2), the service health.
 
 ## Sample output
 
@@ -33,7 +33,7 @@ Total: 2 schedule(s) — 1 active, 1 paused
 
 ## When there's no service running
 
-If DBdock isn't running as a background process, the status section shows:
+If DBDock isn't running as a background process, the status section shows:
 
 ```
 🔴 Not running
@@ -42,12 +42,12 @@ If DBdock isn't running as a background process, the status section shows:
    See https://docs.dbdock.xyz/alerts/scheduling for setup.
 ```
 
-This is normal if you trigger backups via system cron or CI — schedules in the config file are only used when DBdock itself is the scheduler.
+This is normal if you trigger backups via system cron or CI — schedules in the config file are only used when DBDock itself is the scheduler.
 
 ## Use cases
 
 - Check schedule configuration at a glance
-- Verify DBdock is running after a deploy
+- Verify DBDock is running after a deploy
 - Quick health check before relying on a scheduled backup
 
 ## See also

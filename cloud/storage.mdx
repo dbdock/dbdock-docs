@@ -1,0 +1,62 @@
+---
+title: "Storage"
+description: "Store DBDock Cloud backups in included managed storage or bring your own bucket — AWS S3, Cloudflare R2, or Cloudinary — with per-plan quotas and usage tracking."
+icon: "database"
+---
+
+Storage is where your backups live. DBDock Cloud gives you two options, and you can use both at once.
+
+## Managed storage
+
+Every account includes **DBDock managed storage** — encrypted, metered, and ready with zero setup. The free plan includes **1 GB at no cost**; paid plans include more. See [Billing](/cloud/billing) for current quotas and the [pricing page](https://dbdock.xyz/pricing) for authoritative numbers.
+
+<Info>
+  DBDock meters managed-storage usage and warns you as you approach your quota, so a backup never fails silently for lack of space. When you're close to the limit, you'll see an in-app banner and (on eligible plans) an email.
+</Info>
+
+## Bring your own bucket
+
+Prefer to keep backups in infrastructure you control — for compliance, data residency, or a second copy? Connect your own provider:
+
+<CardGroup cols={3}>
+  <Card title="AWS S3" icon="aws" href="/storage/s3">
+    S3 and any S3-compatible store.
+  </Card>
+  <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
+    Zero-egress object storage.
+  </Card>
+  <Card title="Cloudinary" icon="image" href="/storage/cloudinary">
+    Media-focused storage.
+  </Card>
+</CardGroup>
+
+When you add a bucket, DBDock stores only what it needs to write and read backups, and encrypts those credentials at rest. Backups written to your bucket are still encrypted by DBDock before they leave.
+
+## Add a bucket
+
+<Steps>
+  <Step title="Open Storage → Connect your bucket">
+    Choose a provider.
+  </Step>
+  <Step title="Enter credentials">
+    Provide the bucket name, region, endpoint (for S3-compatible providers), and access keys. DBDock validates them before saving.
+  </Step>
+  <Step title="Route backups to it">
+    Pick the bucket as the destination when you create a [backup](/cloud/backups) or a [schedule](/cloud/schedules), or set it as your default.
+  </Step>
+</Steps>
+
+## Deletion safety
+
+DBDock will not silently orphan or wipe backups. Managed storage stays put as part of your plan, and destructive actions on your own buckets are guarded. See [Deletion safety](/storage/deletion-safety).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Storage providers reference" icon="database" href="/storage/overview">
+    Provider-by-provider setup.
+  </Card>
+  <Card title="Billing" icon="credit-card" href="/cloud/billing">
+    Managed-storage quotas by plan.
+  </Card>
+</CardGroup>

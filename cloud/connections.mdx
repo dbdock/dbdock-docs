@@ -1,0 +1,60 @@
+---
+title: "Connections"
+description: "Add and manage database connections in DBDock Cloud — nine supported engines, connection testing, encrypted credentials, and database size tracking."
+icon: "plug"
+---
+
+A **connection** is a database DBDock talks to. Everything else — backups, schedules, migrations, alerts — builds on a connection.
+
+## Supported databases
+
+DBDock Cloud connects to nine database types:
+
+<CardGroup cols={3}>
+  <Card title="PostgreSQL" icon="database" />
+  <Card title="MySQL" icon="database" />
+  <Card title="MariaDB" icon="database" />
+  <Card title="SQL Server" icon="server" />
+  <Card title="CockroachDB" icon="database" />
+  <Card title="Redshift" icon="database" />
+  <Card title="TimescaleDB" icon="clock" />
+  <Card title="MongoDB" icon="leaf" />
+  <Card title="Redis" icon="bolt" />
+</CardGroup>
+
+## Add a connection
+
+<Steps>
+  <Step title="Open Connections → New connection">
+    Give it a recognizable name — this is how it appears across backups, schedules, and alerts.
+  </Step>
+  <Step title="Enter connection details">
+    Provide host, port, database name, and credentials. For databases that require TLS, enable SSL. DBDock encrypts stored credentials at rest.
+  </Step>
+  <Step title="Test the connection">
+    Use **Test connection** to confirm DBDock can reach the database before saving. This catches firewall, credential, and SSL issues early.
+  </Step>
+</Steps>
+
+<Warning>
+  DBDock connects to your database over the network, so it must be reachable from DBDock Cloud. If your database is only accessible from a private network, allowlist DBDock's egress or use the [CLI](/cli/overview), which runs inside your own environment.
+</Warning>
+
+## Database size tracking
+
+DBDock periodically measures each connected database's size and shows the trend on your dashboard and in [Analytics](/cloud/overview). This is metadata only — DBDock reads size, never your table contents, outside of an explicit backup or migration you start.
+
+## Plan limits
+
+The number of connections you can add depends on your plan. See [Billing](/cloud/billing) for current limits, or the [pricing page](https://dbdock.xyz/pricing) for the authoritative numbers.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Take a backup" icon="shield-check" href="/cloud/backups">
+    Once a connection exists, back it up.
+  </Card>
+  <Card title="Security" icon="lock" href="/security/cloud">
+    How credentials are stored and isolated.
+  </Card>
+</CardGroup>

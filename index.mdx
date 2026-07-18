@@ -1,81 +1,96 @@
 ---
-title: 'Welcome to DBdock'
-description: 'The open-source database toolkit for backups, restores, and cross-database migrations.'
+title: "DBDock Documentation"
+description: "DBDock is a database toolkit for PostgreSQL and MongoDB — backups, restores, database copies, and cross-database migrations. Use the open-source CLI, the managed cloud dashboard, or both, kept in sync."
+icon: "house"
 ---
 
-DBdock is an open-source CLI for PostgreSQL backups, restores, database copies, and cross-database migrations between MongoDB and PostgreSQL — with encryption, compression, and multi-cloud storage built in.
+DBDock handles the database chores you'd rather not write scripts for: **backups, restores, database copies, scheduling, and cross-database migrations** — with encryption, compression, and multi-cloud storage built in.
 
-Stop writing throwaway backup scripts. Stop maintaining migration code. One command, one tool.
+There are two ways to use it, and they work together:
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
-    Run your first backup in under 5 minutes.
+  <Card title="DBDock Cloud" icon="cloud" href="/cloud/overview">
+    A hosted dashboard at [dbdock.xyz](https://dbdock.xyz). Connect a database, schedule encrypted backups, and manage everything from the browser — no infrastructure to run.
   </Card>
-  <Card title="Installation" icon="download" href="/get-started/installation">
-    Install globally or run with npx.
-  </Card>
-  <Card title="CLI Reference" icon="terminal" href="/cli/overview">
-    Every command, every flag, every example.
-  </Card>
-  <Card title="Cross-database migration" icon="arrows-left-right" href="/migration/overview">
-    MongoDB ↔ PostgreSQL with schema mapping.
+  <Card title="DBDock CLI" icon="terminal" href="/cli/overview">
+    An open-source, MIT-licensed command-line tool. Run backups and migrations locally or in CI, from a single `dbdock` command.
   </Card>
 </CardGroup>
+
+<Note>
+  **They're the same toolkit.** [Cloud Sync](/cloud-sync/overview) links a local CLI project to your cloud dashboard, so you can automate from the terminal and monitor from the browser. Only non-secret metadata leaves your machine — [see what syncs](/cloud-sync/data-handling).
+</Note>
+
+## Pick your path
+
+<Steps>
+  <Step title="Just want a dashboard?">
+    Start with the [Cloud quickstart](/get-started/quickstart-cloud) — connect a database and take your first backup in the browser.
+  </Step>
+  <Step title="Prefer the terminal?">
+    Start with the [CLI quickstart](/get-started/quickstart) — install `dbdock` and back up a database in one command.
+  </Step>
+  <Step title="Want both?">
+    Do either quickstart, then run `dbdock login` and `dbdock sync` to [link the two](/cloud-sync/overview).
+  </Step>
+</Steps>
 
 ## What you can do
 
 ```bash
-npx dbdock init                              # One-time setup
-npx dbdock backup                            # Backup with encryption + compression
-npx dbdock restore                           # Interactive restore
-npx dbdock copydb "src_url" "dst_url"        # Copy a database, zero config
-npx dbdock migrate "mongo_url" "postgres_url" # Cross-database migration
+npx dbdock backup                              # Encrypted, compressed backup
+npx dbdock restore                             # Interactive point-in-time restore
+npx dbdock copydb "src_url" "dst_url"          # Clone a database, zero config
+npx dbdock migrate "mongo_url" "postgres_url"  # Cross-database migration
+npx dbdock login && npx dbdock sync            # Link this project to the cloud
 ```
 
 ## Features at a glance
 
 <CardGroup cols={2}>
-  <Card title="Beautiful CLI" icon="sparkles">
-    Real-time progress bars, speed tracking, smart filtering for 100+ backups.
+  <Card title="Backups & restores" icon="shield-check" href="/cloud/backups">
+    PostgreSQL and MongoDB backups with AES-256-GCM encryption and zstd compression. Restore interactively or automate it.
   </Card>
-  <Card title="Multiple storage" icon="cloud">
-    Local disk, AWS S3, Cloudflare R2, Cloudinary — swap with one line.
+  <Card title="Database copies" icon="copy" href="/cli/copydb">
+    Clone prod → staging → local with a single command. No dump files to babysit.
   </Card>
-  <Card title="Security-first" icon="lock">
-    AES-256-GCM encryption, env-var secrets, credential masking, `.pgpass` support.
+  <Card title="Cross-database migration" icon="arrows-left-right" href="/migration/overview">
+    MongoDB ↔ PostgreSQL with automatic schema mapping, dry runs, and incremental syncs.
   </Card>
-  <Card title="Retention policies" icon="broom">
-    Auto-clean by count or age. Safety net prevents accidental wipes.
+  <Card title="Scheduling" icon="calendar-days" href="/cloud/schedules">
+    Cron-based schedules that run in the cloud or from the CLI — with retries and run history.
   </Card>
-  <Card title="Alerts" icon="bell">
-    Email (SMTP) and Slack for backup success and failure.
+  <Card title="Multi-cloud storage" icon="database" href="/cloud/storage">
+    DBDock managed storage, or bring your own: AWS S3, Cloudflare R2, Cloudinary, local disk.
   </Card>
-  <Card title="Cross-database" icon="arrows-left-right">
-    MongoDB ↔ PostgreSQL with schema mapping and dry runs.
+  <Card title="Alerts" icon="bell" href="/alerts/overview">
+    Email, Slack, and webhooks for backup success, failure, and schedule events.
   </Card>
-  <Card title="TypeScript SDK" icon="code">
-    Use DBdock programmatically in any Node.js app.
+  <Card title="Analytics & admin panels" icon="chart-line" href="/cloud/overview">
+    Track database growth over time and build no-code admin dashboards from your data.
   </Card>
-  <Card title="MIT licensed" icon="scale-balanced">
-    Free forever. Self-hosted. No vendor lock-in.
+  <Card title="Security-first" icon="lock" href="/security/overview">
+    Encryption by default, secrets kept in environment variables, and metadata-only cloud sync.
   </Card>
 </CardGroup>
 
-## Who it's for
+## Popular pages
 
-DBdock is built for developers and teams who:
-
-- Need reliable PostgreSQL backups without setting up a cloud service
-- Want to copy a database between environments (prod → staging, staging → local)
-- Are migrating from MongoDB to PostgreSQL (or the other way)
-- Prefer a single CLI over stitching together `pg_dump`, cron, and upload scripts
-- Don't want to send their database dumps to a third-party SaaS
+<CardGroup cols={3}>
+  <Card title="Cloud Sync" icon="cloud-arrow-up" href="/cloud-sync/overview">
+    Link the CLI to your dashboard.
+  </Card>
+  <Card title="Security" icon="shield" href="/security/overview">
+    How DBDock protects your data.
+  </Card>
+  <Card title="CLI Reference" icon="terminal" href="/cli/overview">
+    Every command and flag.
+  </Card>
+</CardGroup>
 
 ## Get help
 
-- [GitHub Discussions](https://github.com/dbdock/dbdock/discussions) — ask questions, share ideas
-- [Issue tracker](https://github.com/dbdock/dbdock/issues) — report bugs, request features
-- [Troubleshooting guide](/help/troubleshooting) — common issues and fixes
+- [Dashboard](https://dbdock.xyz) — the DBDock Cloud web app
+- [Troubleshooting](/help/troubleshooting) — common issues and fixes
 - [FAQ](/help/faq) — quick answers
-
-Ready? [Install DBdock →](/get-started/installation)
+- [GitHub](https://github.com/dbdock/dbdock) — source, issues, and discussions

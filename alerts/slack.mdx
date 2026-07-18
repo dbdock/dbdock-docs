@@ -9,7 +9,7 @@ Slack alerts use [incoming webhooks](https://api.slack.com/messaging/webhooks) �
 
 <Steps>
   <Step title="Create a Slack app">
-    Go to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App → From scratch**. Name it "DBdock" (or whatever you like) and pick your workspace.
+    Go to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App → From scratch**. Name it "DBDock" (or whatever you like) and pick your workspace.
   </Step>
   <Step title="Enable incoming webhooks">
     In the app settings, go to **Incoming Webhooks** and toggle it on.
@@ -93,7 +93,7 @@ Sends a test message to the channel. Verify it arrives and looks right.
 - `#backups` — all events (success + failure)
 - `#ops-alerts` — failures only (separate webhook, separate app instance)
 
-DBdock supports one webhook per environment. For multiple channels, run separate DBdock configs (dev, staging, prod) with different webhook URLs.
+DBDock supports one webhook per environment. For multiple channels, run separate DBDock configs (dev, staging, prod) with different webhook URLs.
 
 ### Channel permissions
 

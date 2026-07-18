@@ -1,9 +1,14 @@
 ---
-title: 'CLI overview'
-description: 'Every DBdock command at a glance.'
+title: "CLI Overview"
+description: "Every DBDock CLI command at a glance — setup, backups, restores, database copies, cross-database migration, schedules, and Cloud Sync (login, sync, open)."
+icon: "terminal"
 ---
 
-DBdock ships a single CLI binary — `dbdock` — with commands for setup, backup, restore, migration, and management. Every command is documented on its own page with options, examples, and gotchas.
+DBDock ships a single command — `dbdock` — with subcommands for setup, backups, restores, migration, scheduling, and syncing to [DBDock Cloud](/cloud/overview). It's open source (MIT) and runs anywhere Node.js does. Each command has its own page with options and examples.
+
+<Tip>
+  No install needed to try it: `npx dbdock <command>`. To install globally, see [Installation](/get-started/installation).
+</Tip>
 
 ## Command index
 
@@ -11,10 +16,10 @@ DBdock ships a single CLI binary — `dbdock` — with commands for setup, backu
 
 <CardGroup cols={2}>
   <Card title="dbdock init" icon="play" href="/cli/init">
-    Interactive setup wizard. Run once per project.
+    Interactive setup wizard. Run once per project — it can also link the project to DBDock Cloud.
   </Card>
   <Card title="dbdock migrate-config" icon="shield" href="/cli/migrate-config">
-    Move legacy secrets from config file to environment.
+    Move legacy secrets from the config file into environment variables.
   </Card>
 </CardGroup>
 
@@ -44,8 +49,11 @@ DBdock ships a single CLI binary — `dbdock` — with commands for setup, backu
   <Card title="dbdock copydb" icon="copy" href="/cli/copydb">
     Copy a PostgreSQL database directly between two URLs.
   </Card>
-  <Card title="Cross-DB migration" icon="arrows-left-right" href="/migration/overview">
-    MongoDB ↔ PostgreSQL (see Migration section).
+  <Card title="dbdock migrate" icon="arrows-left-right" href="/migration/overview">
+    Cross-database migration, MongoDB ↔ PostgreSQL.
+  </Card>
+  <Card title="dbdock analyze" icon="magnifying-glass-chart" href="/migration/analyze">
+    Inspect a database's structure before migrating.
   </Card>
 </CardGroup>
 
@@ -53,37 +61,53 @@ DBdock ships a single CLI binary — `dbdock` — with commands for setup, backu
 
 <CardGroup cols={2}>
   <Card title="dbdock test" icon="stethoscope" href="/cli/test">
-    Verify DB, storage, and alert config.
+    Verify database, storage, and alert config.
   </Card>
   <Card title="dbdock status" icon="chart-line" href="/cli/status">
-    View schedules and service health.
+    View configured schedules.
   </Card>
   <Card title="dbdock schedule" icon="clock" href="/cli/schedule">
     Manage cron schedules.
   </Card>
 </CardGroup>
 
-## Global flags
+### Cloud Sync
 
-Every command supports:
+<CardGroup cols={2}>
+  <Card title="dbdock login" icon="right-to-bracket" href="/cli/login">
+    Sign in to DBDock Cloud (also: `logout`, `whoami`, `switch-org`).
+  </Card>
+  <Card title="dbdock sync" icon="arrows-rotate" href="/cli/sync">
+    Push local config to the cloud, check status, pull, resolve conflicts.
+  </Card>
+  <Card title="dbdock open" icon="up-right-from-square" href="/cli/open">
+    Open the linked project in the dashboard.
+  </Card>
+</CardGroup>
+
+<Note>
+  New to syncing the CLI with the dashboard? Start with the [Cloud Sync overview](/cloud-sync/overview).
+</Note>
+
+## Global flags
 
 | Flag | Description |
 |---|---|
 | `--help`, `-h` | Show command help |
-| `--version`, `-V` | Print DBdock version |
+| `--version`, `-V` | Print the DBDock version |
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
 | `0` | Success |
-| `1` | General error |
-| `130` | Interrupted (Ctrl+C or SIGINT) |
+| `1` | General error (including a sync conflict) |
+| `130` | Interrupted (Ctrl+C / SIGINT) |
 
-Commands that perform destructive actions always confirm interactively unless you pass `--force` (where supported).
+Commands that perform destructive actions confirm interactively unless you pass `--force` (where supported).
 
 ## Getting help
 
 - `dbdock <command> --help` — command-specific help
 - [Troubleshooting](/help/troubleshooting) — common issues
-- [GitHub Discussions](https://github.com/dbdock/dbdock/discussions) — ask the community
+- [GitHub](https://github.com/dbdock/dbdock) — source and discussions

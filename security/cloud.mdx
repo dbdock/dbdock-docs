@@ -1,0 +1,50 @@
+---
+title: "Cloud Security"
+description: "How DBDock Cloud secures your data — OAuth sign-in, credentials encrypted at rest, per-account isolation, encrypted backups, scoped MCP access, and metadata-only CLI sync."
+icon: "cloud"
+---
+
+DBDock Cloud stores database credentials and runs jobs on your behalf, so it's built to keep each account's data private and its secrets protected.
+
+## Sign-in
+
+DBDock Cloud uses **OAuth** — there's no password for you to set, reuse, or leak. The same sign-in secures the [dashboard](https://dbdock.xyz), the [CLI login](/cloud-sync/authentication), and the [MCP server](/cloud/mcp).
+
+## Credentials at rest
+
+Connection and storage credentials you enter in the dashboard are **encrypted at rest**. DBDock uses them to reach your database or bucket when a job runs, and masks them in logs. They're never exposed back to the browser or to MCP clients.
+
+## Account isolation
+
+Every request is authenticated and scoped to your own account. You can only see and act on your own connections, backups, storage, schedules, and alerts. In a [team workspace](/cloud/teams), members act on the owner's resources by design — access is shared deliberately within the workspace, not across accounts.
+
+## Encrypted backups
+
+Backups are encrypted with AES-256-GCM (see [Encryption](/security/encryption)). Managed storage is encrypted, and backups written to your own bucket are encrypted by DBDock before they leave.
+
+## MCP access
+
+The [MCP server](/cloud/mcp) authenticates through the same OAuth flow and confines an assistant to your account. It lets an assistant *ask DBDock to act* — it never hands your database credentials to the client.
+
+## What the CLI sends
+
+When you link a project with [Cloud Sync](/cloud-sync/overview), only non-secret metadata is uploaded. Database passwords, storage keys, encryption secrets, and webhook URLs stay on your machine. The full contract is in [Data handling](/cloud-sync/data-handling).
+
+## Your responsibilities
+
+Security is shared. DBDock protects the platform; you protect the keys to your data.
+
+<CardGroup cols={2}>
+  <Card title="Guard your encryption secret" icon="key" href="/security/key-management">
+    It's what makes a downloaded backup restorable.
+  </Card>
+  <Card title="Use least-privilege credentials" icon="user-lock">
+    Give DBDock only the database and bucket permissions it needs.
+  </Card>
+  <Card title="Manage team access" icon="users" href="/cloud/teams">
+    Remove members when they no longer need access.
+  </Card>
+  <Card title="Report issues privately" icon="shield-halved" href="/security/overview">
+    Use private vulnerability reporting, not public issues.
+  </Card>
+</CardGroup>

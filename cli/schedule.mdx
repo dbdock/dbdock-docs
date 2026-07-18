@@ -10,7 +10,7 @@ dbdock schedule
 `schedule` is an interactive menu for adding, editing, and removing cron schedules. Schedules are stored in `dbdock.config.json`.
 
 <Note>
-**The CLI manages config — it doesn't run schedules.** To actually execute scheduled backups, you need to either run DBdock as a long-lived process (see [scheduling guide](/alerts/scheduling)) or use an external scheduler like system cron.
+**The CLI manages config — it doesn't run schedules.** To actually execute scheduled backups, you need to either run DBDock as a long-lived process (see [scheduling guide](/alerts/scheduling)) or use an external scheduler like system cron.
 </Note>
 
 ## Interactive menu
@@ -26,7 +26,7 @@ dbdock schedule
 
 ## Presets
 
-When adding a schedule, DBdock offers common presets:
+When adding a schedule, DBDock offers common presets:
 
 | Preset | Cron | Description |
 |---|---|---|
@@ -60,7 +60,7 @@ Schedules end up in `dbdock.config.json`:
 
 ## Running the schedules
 
-### Option 1 — long-lived DBdock process
+### Option 1 — long-lived DBDock process
 
 Use the programmatic API with `node-cron`. See [SDK → scheduling](/sdk/scheduling).
 

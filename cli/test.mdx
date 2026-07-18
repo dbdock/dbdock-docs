@@ -7,7 +7,7 @@ description: 'Validate your database, storage, and alert configuration.'
 npx dbdock test
 ```
 
-Runs connectivity and configuration checks without creating a backup. Always run this after `dbdock init`, after changing credentials, or before relying on DBdock in production.
+Runs connectivity and configuration checks without creating a backup. Always run this after `dbdock init`, after changing credentials, or before relying on DBDock in production.
 
 ## What it checks
 
@@ -29,7 +29,7 @@ Runs connectivity and configuration checks without creating a backup. Always run
 ## Sample output
 
 ```
-Running DBdock self-test...
+Running DBDock self-test...
 
 ✓ Database connection
   postgres@localhost:5432/myapp — 127ms
@@ -51,7 +51,7 @@ Running DBdock self-test...
   Slack: webhook reachable ✓
   Email: SMTP auth OK ✓
 
-All checks passed — DBdock is ready to go.
+All checks passed — DBDock is ready to go.
 ```
 
 ## When a check fails
@@ -75,7 +75,7 @@ Exit code is `1` on any failure — safe to use in CI as a preflight.
 Add a preflight step to your pipeline:
 
 ```yaml
-- name: DBdock preflight
+- name: DBDock preflight
   run: npx dbdock test
   env:
     DBDOCK_DB_URL: ${{ secrets.DATABASE_URL }}

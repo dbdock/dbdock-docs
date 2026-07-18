@@ -1,0 +1,55 @@
+---
+title: "Plans & Billing"
+description: "DBDock Cloud plans — Free, Pro, and Business. What each unlocks: connections, scheduled backups, managed storage, encryption, team seats, alerts, and admin panels."
+icon: "credit-card"
+---
+
+DBDock Cloud has three plans. The free plan is genuinely useful on its own; paid plans raise limits and unlock automation, encryption, and team features.
+
+<Note>
+  Limits change as plans evolve. This page describes what each plan unlocks; for the authoritative, up-to-date numbers and prices, see the [pricing page](https://dbdock.xyz/pricing).
+</Note>
+
+## Plans at a glance
+
+| | Free | Pro | Business |
+|---|---|---|---|
+| Managed storage | 1 GB | 50 GB | 100 GB |
+| Connections | A couple | Many | Lots |
+| Scheduled backups | — | ✓ | ✓ |
+| Encrypted backups | — | ✓ | ✓ |
+| Incremental backups | — | ✓ | ✓ |
+| Cross-database migrations | Trial | ✓ | ✓ |
+| Database copies | Trial | ✓ | ✓ |
+| Slack & webhook alerts | Email only | ✓ | ✓ |
+| Team members | — | ✓ | ✓ (more seats) |
+| Admin panels | 1 | Several | Many |
+
+<Info>
+  Every plan includes DBDock managed storage and at least one alert channel, so you can back up and be notified from day one. The exact counts per plan live on the [pricing page](https://dbdock.xyz/pricing).
+</Info>
+
+## Managed storage quota
+
+DBDock meters your managed-storage usage. As you approach your quota you'll see an in-app banner, and on eligible plans an email. If you hit the limit, new managed-storage backups are held off until you free space or upgrade — existing backups are never deleted to make room. Route large or long-lived backups to [your own bucket](/cloud/storage) to keep managed storage lean.
+
+## Upgrade, downgrade, and the portal
+
+Manage your subscription from **Billing** in the dashboard. Upgrades take effect immediately so new limits apply right away. Billing and invoices are handled through the customer portal linked from that page.
+
+## What counts against limits
+
+- **Backups per month** — counted per completed backup run, across manual and scheduled.
+- **Migrations and copies per month** — counted per job.
+- **Connections, schedules, alerts, admin panels** — counted by how many exist, not how often they run.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Storage" icon="database" href="/cloud/storage">
+    Managed vs. your own bucket.
+  </Card>
+  <Card title="Team" icon="users" href="/cloud/teams">
+    Seats and shared workspaces.
+  </Card>
+</CardGroup>

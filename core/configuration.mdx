@@ -3,7 +3,7 @@ title: 'Configuration'
 description: 'Complete reference for dbdock.config.json and environment variables.'
 ---
 
-DBdock can be configured via `dbdock.config.json`, environment variables, or a mix of both. Secrets always live in environment variables — never in the config file.
+DBDock can be configured via `dbdock.config.json`, environment variables, or a mix of both. Secrets always live in environment variables — never in the config file.
 
 <Warning>
 **Security-first.** Passwords, API keys, webhooks, and encryption secrets must be set via environment variables. The config file is designed to be committed to your repository; the `.env` file is designed not to be.
@@ -60,7 +60,7 @@ chmod 600 ~/.pgpass
 echo "localhost:5432:myapp:postgres:my-secure-password" >> ~/.pgpass
 ```
 
-DBdock uses `.pgpass` automatically when present.
+DBDock uses `.pgpass` automatically when present.
 
 ## Storage
 
@@ -138,7 +138,7 @@ See the dedicated alert pages for setup:
 
 ## Environment variables reference
 
-DBdock reads from both `.env` and `.env.local`. `.env.local` takes priority.
+DBDock reads from both `.env` and `.env.local`. `.env.local` takes priority.
 
 ### Database
 
@@ -190,7 +190,7 @@ DBdock reads from both `.env` and `.env.local`. `.env.local` takes priority.
 
 ## Strict mode
 
-Set `DBDOCK_STRICT_MODE=true` to enforce environment-only secrets. DBdock will refuse to load any configuration where a secret appears in the config file, preventing accidental commits.
+Set `DBDOCK_STRICT_MODE=true` to enforce environment-only secrets. DBDock will refuse to load any configuration where a secret appears in the config file, preventing accidental commits.
 
 Recommended for CI and production.
 
@@ -202,4 +202,4 @@ If you have secrets in `dbdock.config.json` from an older version:
 npx dbdock migrate-config
 ```
 
-DBdock moves them to `.env`, cleans up the config file, and updates `.gitignore`. See [`migrate-config`](/cli/migrate-config).
+DBDock moves them to `.env`, cleans up the config file, and updates `.gitignore`. See [`migrate-config`](/cli/migrate-config).

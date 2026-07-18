@@ -3,7 +3,7 @@ title: 'Email alerts (SMTP)'
 description: 'Send backup notifications via any SMTP provider.'
 ---
 
-DBdock sends email via standard SMTP — any provider works.
+DBDock sends email via standard SMTP — any provider works.
 
 ## Configuration
 
@@ -152,7 +152,7 @@ Sends a test email to all `to` addresses. Check spam folders if it doesn't arriv
 ## Security
 
 - SMTP credentials live in `.env`, never in `dbdock.config.json`
-- DBdock uses STARTTLS when `secure: false` + port 587
+- DBDock uses STARTTLS when `secure: false` + port 587
 - If your SMTP server requires a certificate chain outside the Node defaults, you'll need to set `NODE_EXTRA_CA_CERTS`
 
 ## See also

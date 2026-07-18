@@ -1,0 +1,64 @@
+---
+title: "Data Handling"
+description: "Exactly what DBDock Cloud Sync uploads and what it never touches. Secrets — passwords, keys, webhook URLs — stay on your machine; only non-sensitive metadata syncs."
+icon: "shield"
+---
+
+Cloud Sync is deliberately conservative about what leaves your machine. This page is the exact contract: what syncs, what doesn't, and why.
+
+## The rule
+
+**Only non-secret metadata syncs. Credentials never do.** DBDock builds the sync payload directly from your `dbdock.config.json`, and the collector drops every secret before anything is sent. Where a secret's *presence* is useful (for example, "encryption is enabled"), it's represented as a boolean flag — never the value.
+
+## What syncs
+
+<AccordionGroup>
+  <Accordion title="Connection" icon="plug">
+    Database `type`, `host`, `port`, `database` name, and `user`. **Not** the password.
+  </Accordion>
+  <Accordion title="Storage" icon="database">
+    Provider and non-secret settings such as bucket name, region, and endpoint. **Not** access keys, secret keys, or API secrets — those are represented only as presence flags.
+  </Accordion>
+  <Accordion title="Backup settings" icon="gear">
+    Format, whether compression is enabled, whether encryption is enabled, and retention settings. **Not** the encryption secret.
+  </Accordion>
+  <Accordion title="Schedules" icon="calendar-days">
+    Schedule name, cron expression, and enabled state.
+  </Accordion>
+  <Accordion title="Alerts" icon="bell">
+    Channel type and non-secret settings. **Not** webhook URLs, Slack tokens, or SMTP passwords.
+  </Accordion>
+</AccordionGroup>
+
+## What never syncs
+
+<Warning>
+  These values are never included in a sync payload, by design:
+
+  - Database passwords
+  - Storage access keys, secret keys, and Cloudinary API secrets
+  - Backup encryption secrets
+  - SMTP passwords
+  - Slack and custom webhook URLs
+</Warning>
+
+Your backups themselves are also not part of sync. Sync mirrors *configuration metadata*, not backup files or database contents. Backup files go to your chosen [storage](/cloud/storage); Cloud Sync only records that a backup exists and its non-sensitive attributes.
+
+## Why it's built this way
+
+Secrets belong in your environment, not in a config file and not in a remote mirror. This is the same principle the CLI follows everywhere — see [`dbdock migrate-config`](/cli/migrate-config), which moves secrets out of config files into environment variables. Cloud Sync extends that principle across the wire: the dashboard can show you *what* you have configured without ever holding the keys to it.
+
+## Where it's stored locally
+
+The link and last-synced state live in your project under `.dbdock/`. Your global credentials live under `~/.dbdock/` (override with `DBDOCK_HOME`). Add `.dbdock/` to your `.gitignore` if you don't want the link committed.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Cloud security" icon="lock" href="/security/cloud">
+    How the cloud stores and isolates data.
+  </Card>
+  <Card title="Key management" icon="key" href="/security/key-management">
+    Where secrets should live.
+  </Card>
+</CardGroup>

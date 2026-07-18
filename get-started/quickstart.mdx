@@ -1,12 +1,17 @@
 ---
-title: 'Quickstart'
-description: 'Go from zero to your first backup in under 5 minutes.'
+title: "CLI Quickstart"
+description: "Go from zero to your first backup with the DBDock CLI in under 5 minutes — install, initialize, back up, and restore from your terminal."
+icon: "terminal"
 ---
 
-This guide takes you through setup, your first backup, and your first restore. Total time: about 5 minutes.
+This guide takes you through setup, your first backup, and your first restore with the DBDock CLI. Total time: about 5 minutes.
 
 <Note>
-Haven't installed DBdock yet? See the [installation guide](/get-started/installation).
+  Prefer a dashboard? Follow the [Cloud Quickstart](/get-started/quickstart-cloud) instead. Want both? Do this, then [link the CLI to the cloud](/cloud-sync/overview).
+</Note>
+
+<Note>
+  Haven't installed DBDock yet? See the [installation guide](/get-started/installation).
 </Note>
 
 ## 1. Initialize
@@ -49,7 +54,7 @@ The backup is encrypted (if enabled), compressed, and streamed directly to your 
 npx dbdock restore
 ```
 
-DBdock shows a list of backups and lets you pick one:
+DBDock shows a list of backups and lets you pick one:
 
 ```
 Progress:
@@ -68,7 +73,7 @@ You can also restore into a **different** database. Pick "New Database Instance 
 
 ## 4. Verify everything works
 
-Before trusting DBdock in production, run the self-test:
+Before trusting DBDock in production, run the self-test:
 
 ```bash
 npx dbdock test
@@ -82,7 +87,7 @@ This checks:
 
 ## Environment-only setup (no config file)
 
-Prefer not to commit a config file? Run DBdock entirely from environment variables:
+Prefer not to commit a config file? Run DBDock entirely from environment variables:
 
 ```bash
 # .env

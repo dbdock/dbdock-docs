@@ -3,7 +3,7 @@ title: 'Scheduling backups'
 description: 'Run automated backups on a cron schedule.'
 ---
 
-DBdock supports three ways to run scheduled backups. Pick based on your deployment.
+DBDock supports three ways to run scheduled backups. Pick based on your deployment.
 
 <CardGroup cols={3}>
   <Card title="System cron" icon="server">
@@ -35,7 +35,7 @@ This runs a backup at 02:00 every day. Adjust the path, time, and log file.
 
 - Simplest possible setup
 - Battle-tested scheduler
-- Works even if DBdock isn't running
+- Works even if DBDock isn't running
 
 ### Cons
 
@@ -45,7 +45,7 @@ This runs a backup at 02:00 every day. Adjust the path, time, and log file.
 
 ## Option 2 — Programmatic with node-cron
 
-Run DBdock as a long-lived Node.js process. Useful when you want to share backup scheduling with the rest of your app.
+Run DBDock as a long-lived Node.js process. Useful when you want to share backup scheduling with the rest of your app.
 
 ```bash
 npm install node-cron
@@ -117,7 +117,7 @@ spec:
 
 ### AWS EventBridge + Fargate/Lambda
 
-Schedule rule → ECS RunTask (Fargate) that runs a DBdock container. Or package as a Lambda if your backup fits in 15 minutes and 10 GB.
+Schedule rule → ECS RunTask (Fargate) that runs a DBDock container. Or package as a Lambda if your backup fits in 15 minutes and 10 GB.
 
 ### GCP Cloud Scheduler + Cloud Run
 

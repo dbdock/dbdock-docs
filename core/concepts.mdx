@@ -1,13 +1,13 @@
 ---
 title: 'Concepts'
-description: 'How DBdock thinks about backups, compression, encryption, and storage.'
+description: 'How DBDock thinks about backups, compression, encryption, and storage.'
 ---
 
-This page explains the mental model behind DBdock. Reading it once will make every other page easier to follow.
+This page explains the mental model behind DBDock. Reading it once will make every other page easier to follow.
 
 ## Backup anatomy
 
-A DBdock backup is always one file per backup. The filename encodes when it was taken:
+A DBDock backup is always one file per backup. The filename encodes when it was taken:
 
 ```
 backup-YYYY-MM-DD-HH-MM-SS-BACKUPID.sql
@@ -37,7 +37,7 @@ storage adapter ──▶ [decrypt] ──▶ [decompress] ──▶ pg_restore 
 
 ## Backup formats
 
-DBdock supports all four PostgreSQL formats from `pg_dump`:
+DBDock supports all four PostgreSQL formats from `pg_dump`:
 
 | Format | Extension | When to use |
 |---|---|---|
@@ -56,7 +56,7 @@ Set format in `dbdock.config.json`:
 
 ## Compression
 
-DBdock uses [zstd](https://github.com/facebook/zstd) for compression. zstd is fast and compresses roughly as well as gzip at higher levels.
+DBDock uses [zstd](https://github.com/facebook/zstd) for compression. zstd is fast and compresses roughly as well as gzip at higher levels.
 
 - **Level 0** — no compression
 - **Level 6** (default) — balanced
@@ -66,17 +66,17 @@ Compression is applied *after* `pg_dump`, so it works regardless of backup forma
 
 ## Encryption
 
-DBdock encrypts with **AES-256-GCM**. The key is derived from `DBDOCK_ENCRYPTION_SECRET` using **PBKDF2** with 100,000 iterations (configurable).
+DBDock encrypts with **AES-256-GCM**. The key is derived from `DBDOCK_ENCRYPTION_SECRET` using **PBKDF2** with 100,000 iterations (configurable).
 
 - Encryption is applied *after* compression, so encrypted backups are also compressed.
 - The IV is generated fresh per backup and stored in the file header alongside the ciphertext.
 - Losing the secret = losing the ability to restore. Store it somewhere other than the backup destination.
 
-See the [Security page](/core/security) for key management guidance.
+See the [Security page](/security/overview) for key management guidance.
 
 ## Storage adapters
 
-DBdock ships adapters for four storage backends. They all implement the same interface — `put`, `get`, `list`, `delete` — so swapping providers never requires changing how you use the CLI.
+DBDock ships adapters for four storage backends. They all implement the same interface — `put`, `get`, `list`, `delete` — so swapping providers never requires changing how you use the CLI.
 
 <CardGroup cols={2}>
   <Card title="Local" icon="folder" href="/storage/local">
@@ -95,13 +95,13 @@ DBdock ships adapters for four storage backends. They all implement the same int
 
 ## Retention
 
-Without cleanup, backups accumulate. DBdock applies a retention policy with three knobs:
+Without cleanup, backups accumulate. DBDock applies a retention policy with three knobs:
 
 - `maxBackups` — cap the total count
 - `maxAgeDays` — delete backups older than N days
 - `minBackups` — *never* delete below this count, no matter what
 
-`minBackups` is the safety net — even if every other rule says "delete," DBdock will refuse to go below it. See [Retention strategies](/guides/retention-strategies) for recommended settings.
+`minBackups` is the safety net — even if every other rule says "delete," DBDock will refuse to go below it. See [Retention strategies](/guides/retention-strategies) for recommended settings.
 
 ## The config file
 
@@ -120,7 +120,7 @@ Secrets (passwords, keys, webhooks) never go in the config file — they live in
 
 ## Programmatic use
 
-Everything the CLI does, you can do from code. DBdock exports a small NestJS-based module that exposes `BackupService`, `StorageService`, and `CryptoService`:
+Everything the CLI does, you can do from code. DBDock exports a small NestJS-based module that exposes `BackupService`, `StorageService`, and `CryptoService`:
 
 ```javascript
 const { createDBDock, BackupService } = require('dbdock');

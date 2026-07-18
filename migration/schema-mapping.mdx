@@ -1,9 +1,9 @@
 ---
 title: 'Schema mapping'
-description: 'How DBdock translates types between MongoDB and PostgreSQL.'
+description: 'How DBDock translates types between MongoDB and PostgreSQL.'
 ---
 
-Cross-database migration requires a type system translation. This page documents exactly how DBdock maps types in both directions.
+Cross-database migration requires a type system translation. This page documents exactly how DBDock maps types in both directions.
 
 ## MongoDB → PostgreSQL
 
@@ -30,7 +30,7 @@ Cross-database migration requires a type system translation. This page documents
 
 ### Mixed types
 
-If a field has multiple types across documents (e.g., 99% `Int`, 1% `Double`), DBdock picks the "widest" compatible Postgres type. You'll see a warning:
+If a field has multiple types across documents (e.g., 99% `Int`, 1% `Double`), DBDock picks the "widest" compatible Postgres type. You'll see a warning:
 
 ```
 ⚠️ users.age: mixed Int/Double → chose double precision
@@ -98,7 +98,7 @@ CREATE TABLE users (
 
 ### Relationships
 
-DBdock can optionally embed one-to-many relationships into parent documents:
+DBDock can optionally embed one-to-many relationships into parent documents:
 
 - **Reference mode** (default): stores the FK as-is, creates separate collections.
 - **Embed mode**: pulls child rows into a nested array on the parent document.

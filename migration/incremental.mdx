@@ -11,16 +11,16 @@ Once you've done an initial migration, you usually want to keep the target in sy
 npx dbdock migrate "$SRC" "$DST" --incremental --since "2026-04-01T00:00:00Z"
 ```
 
-`--since` is the cutoff — DBdock ignores anything older than this timestamp.
+`--since` is the cutoff — DBDock ignores anything older than this timestamp.
 
 ## How "changed" is determined
 
-DBdock looks for timestamp fields on each source table/collection:
+DBDock looks for timestamp fields on each source table/collection:
 
 - MongoDB: `updated_at`, `createdAt`, or the `ObjectId` embedded timestamp
 - PostgreSQL: `updated_at`, `created_at`, or any `timestamptz` column named `*_at`
 
-If DBdock can't find a suitable field, it falls back to insert-only mode (new rows only, updates are missed).
+If DBDock can't find a suitable field, it falls back to insert-only mode (new rows only, updates are missed).
 
 ## Recommended pattern
 

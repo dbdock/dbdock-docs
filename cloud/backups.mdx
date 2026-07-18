@@ -1,0 +1,69 @@
+---
+title: "Backups & Restore"
+description: "Create encrypted, compressed database backups in DBDock Cloud, restore them, retry failures, download files, and apply retention — on demand or on a schedule."
+icon: "shield-check"
+---
+
+A backup is a point-in-time snapshot of a connected database, encrypted and compressed, stored in your chosen [storage](/cloud/storage). DBDock Cloud runs the same engines as the [CLI](/cli/overview) — see [Concepts](/core/concepts) for the backup pipeline and formats.
+
+## Create a backup
+
+<Steps>
+  <Step title="Open Backups → New backup">
+    Choose the [connection](/cloud/connections) to back up.
+  </Step>
+  <Step title="Pick a destination">
+    Select managed storage or one of your own buckets. Defaults to your primary storage.
+  </Step>
+  <Step title="Start it">
+    Watch live progress. When it finishes, the backup appears in the list with its size, duration, and status.
+  </Step>
+</Steps>
+
+<Tip>
+  To run backups automatically, create a [schedule](/cloud/schedules) instead of starting them by hand.
+</Tip>
+
+## Restore a backup
+
+Open any completed backup and choose **Restore**. You can restore into the original database or a different connection — useful for [refreshing staging](/guides/staging-refresh) from production.
+
+<Warning>
+  Restoring overwrites data in the target database. Double-check the target connection before you confirm.
+</Warning>
+
+## Manage backups
+
+<AccordionGroup>
+  <Accordion title="Retry a failed backup" icon="rotate">
+    Failed backups can be retried from the list. The logs explain what went wrong — a common cause is an unreachable database or a storage credential issue.
+  </Accordion>
+  <Accordion title="Download a backup" icon="download">
+    Download the encrypted backup file to keep an off-platform copy. You'll need your encryption secret to restore it later — see [Key management](/security/key-management).
+  </Accordion>
+  <Accordion title="View logs" icon="file-lines">
+    Every backup keeps detailed logs, including timing and any errors, so you can diagnose issues without guesswork.
+  </Accordion>
+  <Accordion title="Delete a backup" icon="trash">
+    Remove a backup you no longer need. See [Deletion safety](/storage/deletion-safety) for how DBDock protects against accidental data loss.
+  </Accordion>
+</AccordionGroup>
+
+## Retention
+
+Instead of deleting backups by hand, set a retention policy so DBDock keeps the right number and cleans up the rest automatically. Retention has three controls — a maximum count, a maximum age, and a floor that's never crossed. See [Retention strategies](/guides/retention-strategies).
+
+## Encryption
+
+Backups are encrypted with **AES-256-GCM**. On paid plans, encryption is on by default. The encryption secret is what makes a backup restorable — store it safely and separately from the backups themselves. See [Encryption](/security/encryption).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Schedules" icon="calendar-days" href="/cloud/schedules">
+    Automate backups with cron.
+  </Card>
+  <Card title="Storage" icon="database" href="/cloud/storage">
+    Where backups are stored.
+  </Card>
+</CardGroup>

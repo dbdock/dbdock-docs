@@ -1,0 +1,113 @@
+---
+title: "Syncing a Project"
+description: "Push local DBDock config to the cloud, check sync status, pull the cloud baseline, and resolve conflicts with dbdock sync — plus opening the linked project in the dashboard."
+icon: "arrows-rotate"
+---
+
+Once you're [signed in](/cloud-sync/authentication) and the project is [linked](/cli/init), `dbdock sync` keeps your dashboard in step with your local configuration.
+
+## Push local changes
+
+```bash
+dbdock sync
+```
+
+This reads your `dbdock.config.json`, compares it to the last synced state, and pushes the differences to DBDock Cloud.
+
+```text
+Synced. 1 change set(s) pushed.
+```
+
+If nothing changed, it says so and does nothing:
+
+```text
+Nothing to sync — local metadata matches cloud.
+```
+
+<Note>
+  Only non-secret metadata is sent. See exactly what leaves your machine in [Data handling](/cloud-sync/data-handling).
+</Note>
+
+## Check status
+
+```bash
+dbdock sync status
+```
+
+```text
+Project:  proj_...
+Local:    revision 7
+Cloud:    revision 7
+Pending:  0
+Last sync: 2026-07-18T09:12:00Z
+In sync.
+```
+
+Status works offline too — if the cloud is unreachable it reports `unreachable (offline)` and shows your pending local changes so you know what will push once you're back online.
+
+## Pull the cloud baseline
+
+```bash
+dbdock sync pull
+```
+
+Adopts the current cloud revision as your local baseline. Use it to align a fresh checkout, or as one side of resolving a conflict.
+
+## Resolving conflicts
+
+A conflict means the cloud has diverged from the baseline your machine last saw — for example, the project changed from another machine. `dbdock sync` stops rather than guess:
+
+```text
+Cloud has diverged from your local baseline (conflict).
+Resolve with `dbdock sync pull` (adopt cloud) or `dbdock sync --force` (overwrite cloud).
+```
+
+You choose which side wins:
+
+<CardGroup cols={2}>
+  <Card title="Keep cloud" icon="cloud-arrow-down">
+    ```bash
+    dbdock sync pull
+    ```
+    Adopt the cloud state as your new baseline, then re-apply local changes if needed.
+  </Card>
+  <Card title="Keep local" icon="cloud-arrow-up">
+    ```bash
+    dbdock sync --force
+    ```
+    Overwrite the cloud with your local metadata.
+  </Card>
+</CardGroup>
+
+DBDock saves conflict snapshots under `.dbdock/conflicts/` so nothing is lost while you decide.
+
+## Open the dashboard
+
+```bash
+dbdock open
+```
+
+Opens this project in the DBDock dashboard. To print the URL instead of launching a browser (handy over SSH):
+
+```bash
+dbdock open --print
+```
+
+<Info>
+  `dbdock open` needs a linked project. If you see "No linked project," run [`dbdock init`](/cli/init) first to link this directory.
+</Info>
+
+## Offline and retries
+
+Sync is resilient. Change sets are queued locally and drained to the cloud; if a push fails, it's retried on the next sync. `dbdock sync status` shows pending items and flags any that need attention.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Data handling" icon="shield" href="/cloud-sync/data-handling">
+    What syncs, and what never does.
+  </Card>
+  <Card title="dbdock sync reference" icon="terminal" href="/cli/sync">
+    Command flags and exit codes.
+  </Card>
+</CardGroup>

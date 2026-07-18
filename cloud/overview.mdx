@@ -1,0 +1,80 @@
+---
+title: "DBDock Cloud"
+description: "DBDock Cloud is the managed dashboard at dbdock.xyz — connections, encrypted backups, scheduling, storage, migrations, analytics, alerts, teams, and admin panels, with nothing to self-host."
+icon: "cloud"
+---
+
+DBDock Cloud is the hosted version of DBDock, at [dbdock.xyz](https://dbdock.xyz). It runs the same backup and migration engines as the [CLI](/cli/overview), but the scheduling, storage, and job execution are managed for you.
+
+<Card title="Open the dashboard" icon="gauge" href="https://dbdock.xyz" horizontal>
+  Sign in with OAuth — no password to manage.
+</Card>
+
+## What's inside
+
+<CardGroup cols={2}>
+  <Card title="Connections" icon="plug" href="/cloud/connections">
+    Connect nine database types. Test reachability and track database size over time.
+  </Card>
+  <Card title="Backups" icon="shield-check" href="/cloud/backups">
+    Encrypted, compressed backups on demand or on a schedule. Restore, retry, and download.
+  </Card>
+  <Card title="Storage" icon="database" href="/cloud/storage">
+    DBDock managed storage, or bring your own S3, R2, or Cloudinary bucket.
+  </Card>
+  <Card title="Copy Database" icon="copy" href="/cli/copydb">
+    Clone a database between environments without leaving the browser.
+  </Card>
+  <Card title="Migrations" icon="arrows-left-right" href="/migration/overview">
+    Cross-database migration between MongoDB and PostgreSQL.
+  </Card>
+  <Card title="Schedules" icon="calendar-days" href="/cloud/schedules">
+    Cron-based automation with retries and full run history.
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/cloud/overview">
+    Watch row counts and database sizes trend over time.
+  </Card>
+  <Card title="Alerts" icon="bell" href="/alerts/overview">
+    Email, Slack, and webhook notifications for job events.
+  </Card>
+  <Card title="Admin Panels" icon="table-cells" href="/cloud/overview">
+    Build no-code, shareable admin dashboards from a PostgreSQL database.
+  </Card>
+  <Card title="Team" icon="users" href="/cloud/teams">
+    Invite people into a shared workspace to manage databases together.
+  </Card>
+  <Card title="MCP" icon="robot" href="/cloud/mcp">
+    Connect AI assistants to your DBDock account over the Model Context Protocol.
+  </Card>
+  <Card title="Billing" icon="credit-card" href="/cloud/billing">
+    Plans, entitlements, and managed-storage quota.
+  </Card>
+</CardGroup>
+
+## Cloud vs. CLI
+
+Both surfaces share the same engines and file formats. The difference is where the work runs and what's managed.
+
+| | DBDock Cloud | DBDock CLI |
+|---|---|---|
+| Where it runs | Hosted at dbdock.xyz | Your machine or CI |
+| Scheduling | Managed — DBDock runs your jobs | Your own cron / scheduler |
+| Storage | Managed storage included, or bring your own | Bring your own |
+| Team access | Shared workspaces | Per-machine |
+| License | Managed subscription | Open source (MIT) |
+| Best for | Hands-off, always-on operations | Local control, scripting, CI |
+
+<Tip>
+  You don't have to choose. [Cloud Sync](/cloud-sync/overview) links a local project to your dashboard so you get both — terminal control and a managed, always-on view.
+</Tip>
+
+## Getting started
+
+<CardGroup cols={2}>
+  <Card title="Cloud Quickstart" icon="rocket" href="/get-started/quickstart-cloud">
+    First backup in five minutes.
+  </Card>
+  <Card title="Plans & limits" icon="credit-card" href="/cloud/billing">
+    What each plan includes.
+  </Card>
+</CardGroup>

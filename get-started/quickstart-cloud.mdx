@@ -1,0 +1,48 @@
+---
+title: "Cloud Quickstart"
+description: "Connect a database and take your first encrypted backup in DBDock Cloud in under five minutes — no installation, no infrastructure."
+icon: "rocket"
+---
+
+This guide takes you from zero to your first backup in the [DBDock Cloud](https://dbdock.xyz) dashboard. No installation required.
+
+<Note>
+  Prefer the terminal? Follow the [CLI Quickstart](/get-started/quickstart) instead — or do both and [link them with Cloud Sync](/cloud-sync/overview).
+</Note>
+
+<Steps>
+  <Step title="Create your account">
+    Go to [dbdock.xyz](https://dbdock.xyz) and sign in. DBDock uses secure OAuth sign-in — there's no password to manage.
+  </Step>
+  <Step title="Add a connection">
+    Open **Connections → New connection** and enter your database details. DBDock supports PostgreSQL, MySQL, MariaDB, SQL Server, CockroachDB, Redshift, TimescaleDB, MongoDB, and Redis.
+
+    Use **Test connection** to confirm DBDock can reach the database before saving. Credentials are encrypted at rest — see [Cloud security](/security/cloud).
+  </Step>
+  <Step title="Choose where backups go">
+    Every account includes **1 GB of DBDock managed storage, free** — nothing to configure. Prefer your own bucket? Add AWS S3, Cloudflare R2, or Cloudinary under **Storage**. See [Storage](/cloud/storage).
+  </Step>
+  <Step title="Run your first backup">
+    Open **Backups → New backup**, pick your connection, and start it. You'll see live progress, and the finished backup appears in the list with its size and duration.
+  </Step>
+  <Step title="Automate it (optional)">
+    Open **Schedules** and create a cron schedule — for example, every night at 2 AM. DBDock runs it for you and keeps a full run history. Scheduling is available on paid plans; see [Billing](/cloud/billing).
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connections" icon="plug" href="/cloud/connections">
+    Manage databases, test reachability, and track size over time.
+  </Card>
+  <Card title="Backups & restore" icon="shield-check" href="/cloud/backups">
+    Restore, retry, download, and set retention.
+  </Card>
+  <Card title="Alerts" icon="bell" href="/alerts/overview">
+    Get notified on success or failure via email, Slack, or webhooks.
+  </Card>
+  <Card title="Link the CLI" icon="cloud-arrow-up" href="/cloud-sync/overview">
+    Automate from the terminal, monitor from the dashboard.
+  </Card>
+</CardGroup>

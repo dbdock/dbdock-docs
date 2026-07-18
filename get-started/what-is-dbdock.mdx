@@ -1,0 +1,53 @@
+---
+title: "What is DBDock?"
+description: "An overview of DBDock — the open-source CLI, the managed cloud dashboard, supported databases, and how the two surfaces stay in sync."
+icon: "circle-question"
+---
+
+DBDock is a database operations toolkit. It does the recurring, easy-to-get-wrong jobs — **backups, restores, copies, schedules, and cross-database migrations** — through one consistent tool, so you don't maintain a pile of `pg_dump`, `cron`, and upload scripts.
+
+## Two surfaces, one toolkit
+
+<CardGroup cols={2}>
+  <Card title="Open-source CLI" icon="terminal">
+    The `dbdock` npm package. MIT licensed, self-hosted, runs anywhere Node.js runs — your laptop, a server, or CI. Nothing leaves your machine unless you ask it to.
+  </Card>
+  <Card title="Managed Cloud" icon="cloud">
+    The hosted dashboard at [dbdock.xyz](https://dbdock.xyz). Managed storage, scheduled jobs that run for you, team access, analytics, and alerts — no infrastructure to operate.
+  </Card>
+</CardGroup>
+
+[Cloud Sync](/cloud-sync/overview) is the bridge: link a local CLI project to your cloud account so the dashboard reflects what you have configured locally. Crucially, **secrets never sync** — only non-sensitive metadata. See [Data handling](/cloud-sync/data-handling).
+
+## Supported databases
+
+| Capability | PostgreSQL family | MySQL / MariaDB | SQL Server | MongoDB | Redis |
+|---|---|---|---|---|---|
+| Backup & restore | ✓ | ✓ | ✓ | Cloud connect only | ✓ |
+| Database copy (same engine) | ✓ | ✓ | ✓ | — | — |
+| Cross-database migration | ✓ (↔ MongoDB) | — | — | ✓ (↔ PostgreSQL) | — |
+
+<Info>
+  The **PostgreSQL family** includes PostgreSQL, CockroachDB, Redshift, and TimescaleDB. In DBDock Cloud you can connect nine database types; the CLI's backup engines cover the PostgreSQL family, MySQL/MariaDB, SQL Server, and Redis. Cross-database migration is MongoDB ↔ PostgreSQL.
+</Info>
+
+## What it's good at
+
+- **Reliable backups** — encrypted with AES-256-GCM and compressed with zstd, stored wherever you choose.
+- **Fast restores** — pick a backup and restore interactively, or automate it.
+- **Environment cloning** — copy prod to staging or staging to local with one command.
+- **Cross-database migration** — move between MongoDB and PostgreSQL with schema mapping and dry runs.
+- **Hands-off automation** — cron schedules that run in the cloud, with alerts when something needs your attention.
+
+## Who it's for
+
+DBDock is built for developers and teams who want dependable database operations without stitching tools together — whether you prefer a dashboard, a terminal, or both.
+
+<CardGroup cols={2}>
+  <Card title="Start in the browser" icon="cloud" href="/get-started/quickstart-cloud">
+    The Cloud quickstart.
+  </Card>
+  <Card title="Start in the terminal" icon="terminal" href="/get-started/quickstart">
+    The CLI quickstart.
+  </Card>
+</CardGroup>

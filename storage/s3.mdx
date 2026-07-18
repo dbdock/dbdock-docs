@@ -3,7 +3,7 @@ title: 'AWS S3'
 description: 'Store backups in Amazon S3 or any S3-compatible service.'
 ---
 
-DBdock uses the AWS SDK under the hood, so anything S3-compatible works: AWS S3, MinIO, Wasabi, DigitalOcean Spaces, Backblaze B2, etc.
+DBDock uses the AWS SDK under the hood, so anything S3-compatible works: AWS S3, MinIO, Wasabi, DigitalOcean Spaces, Backblaze B2, etc.
 
 ## Configuration
 
@@ -45,7 +45,7 @@ DBDOCK_STORAGE_SECRET_KEY=...
 
 ## Required IAM permissions
 
-Create a dedicated IAM user for DBdock with **least-privilege** access:
+Create a dedicated IAM user for DBDock with **least-privilege** access:
 
 ```json
 {
@@ -83,7 +83,7 @@ Replace `my-dbdock-backups` with your bucket name. The IAM user does not need an
     Under "Bucket Versioning", enable it. This protects against ransomware — deleted backups can be recovered.
   </Step>
   <Step title="Enable encryption at rest">
-    Under "Default encryption", enable SSE-S3 (AES-256) or SSE-KMS. DBdock's own encryption layer is separate — both work together.
+    Under "Default encryption", enable SSE-S3 (AES-256) or SSE-KMS. DBDock's own encryption layer is separate — both work together.
   </Step>
   <Step title="Optional: lifecycle rule">
     Move backups older than N days to Glacier or delete them via S3 lifecycle rules. Cheaper than keeping everything in Standard.
@@ -96,11 +96,11 @@ Replace `my-dbdock-backups` with your bucket name. The IAM user does not need an
 npx dbdock test
 ```
 
-Look for the `Storage: AWS S3` section in the output. DBdock uploads a tiny test object and deletes it to verify full read/write/delete permissions.
+Look for the `Storage: AWS S3` section in the output. DBDock uploads a tiny test object and deletes it to verify full read/write/delete permissions.
 
 ## Cross-region replication
 
-If you need multi-region disaster recovery, configure S3 Cross-Region Replication (CRR) on the bucket. DBdock is agnostic to this — it writes to the primary and S3 handles the replication.
+If you need multi-region disaster recovery, configure S3 Cross-Region Replication (CRR) on the bucket. DBDock is agnostic to this — it writes to the primary and S3 handles the replication.
 
 ## S3-compatible services
 
@@ -128,7 +128,7 @@ Tested combinations:
   </Accordion>
   <Accordion title="SignatureDoesNotMatch">
     - Access/secret key pair is wrong or expired
-    - Clock drift on the machine running DBdock (S3 requires ±15 min of accurate time)
+    - Clock drift on the machine running DBDock (S3 requires ±15 min of accurate time)
   </Accordion>
 </AccordionGroup>
 
@@ -148,7 +148,7 @@ R2 and Cloudinary have no egress fees — worth considering if you restore often
   <Card title="Cloudflare R2" icon="cloudflare" href="/storage/r2">
     Zero-egress S3-compatible alternative.
   </Card>
-  <Card title="Security" icon="lock" href="/core/security">
+  <Card title="Security" icon="lock" href="/security/overview">
     Storage security best practices.
   </Card>
 </CardGroup>

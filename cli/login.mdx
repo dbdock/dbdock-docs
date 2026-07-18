@@ -1,0 +1,82 @@
+---
+title: "dbdock login"
+description: "Sign in to DBDock Cloud from the CLI with browser OAuth. Includes logout, whoami, and switch-org, plus token-based sign-in for CI and profiles for multiple accounts."
+icon: "right-to-bracket"
+---
+
+```bash
+npx dbdock login [options]
+```
+
+Signs you in to DBDock Cloud so the CLI can [sync this project](/cli/sync) to your dashboard. Sign-in uses browser **OAuth** — there's no API key to create. For the full walkthrough, see [Authentication](/cloud-sync/authentication).
+
+## Quick example
+
+```bash
+dbdock login
+# Opens your browser to authorize the CLI
+# → Logged in as you@example.com (profile: default)
+```
+
+If the browser doesn't open, the CLI prints a URL to visit manually. Credentials are stored under `~/.dbdock/` — not in your project.
+
+## Options
+
+| Option | Description |
+|---|---|
+| `--token <token>` | Sign in with a token instead of the browser flow (for CI). Also read from `DBDOCK_TOKEN`. |
+| `--web` | Sign in via the browser (the default). |
+| `--profile <name>` | Sign in to a named account profile. |
+
+## Related account commands
+
+<AccordionGroup>
+  <Accordion title="dbdock whoami" icon="id-badge">
+    Show the currently authenticated account — email, id, auth method, org, and active profile.
+
+    ```bash
+    dbdock whoami
+    ```
+  </Accordion>
+  <Accordion title="dbdock logout" icon="right-from-bracket">
+    Remove stored credentials for the active profile. Your project link is left intact.
+
+    ```bash
+    dbdock logout [--profile <name>]
+    ```
+  </Accordion>
+  <Accordion title="dbdock switch-org" icon="building">
+    Set the active organization. Forward-compatible — accounts are single-scope today.
+
+    ```bash
+    dbdock switch-org --org <id>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## CI usage
+
+```bash
+export DBDOCK_TOKEN="..."   # from your CI secret store
+dbdock login                # picks up the token automatically
+dbdock sync
+```
+
+<Warning>
+  Never commit a token. Inject `DBDOCK_TOKEN` from your CI provider's secret store. See [Key management](/security/key-management).
+</Warning>
+
+## Profiles
+
+Work with more than one account by naming profiles. Each keeps its own credentials and endpoint.
+
+```bash
+dbdock login --profile work
+dbdock sync   # uses default unless you pass --profile work
+```
+
+## Next
+
+<Card title="Sync your project" icon="arrows-rotate" href="/cli/sync" horizontal>
+  Signed in — now push this project to the cloud.
+</Card>

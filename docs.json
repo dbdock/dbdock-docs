@@ -1,7 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "DBdock",
+  "name": "DBDock",
+  "description": "DBDock is a database toolkit for backups, restores, database copies, and cross-database migrations — as an open-source CLI and a managed cloud dashboard, kept in sync.",
   "logo": {
     "light": "/images/logo-primary.png",
     "dark": "/images/logo-white.png"
@@ -15,6 +16,20 @@
     "dark": "#16324d"
   },
   "favicon": "/images/favicon.png",
+  "seo": {
+    "indexing": "navigable",
+    "metatags": {
+      "og:site_name": "DBDock Documentation",
+      "og:type": "website",
+      "twitter:card": "summary_large_image"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/core/security",
+      "destination": "/security/overview"
+    }
+  ],
   "navigation": {
     "tabs": [
       {
@@ -24,20 +39,74 @@
             "group": "Get Started",
             "pages": [
               "index",
-              "get-started/installation",
-              "get-started/quickstart"
+              "get-started/what-is-dbdock",
+              "get-started/quickstart-cloud",
+              "get-started/quickstart",
+              "get-started/installation"
             ]
           },
           {
-            "group": "Core",
+            "group": "Core Concepts",
             "pages": [
               "core/concepts",
-              "core/configuration",
-              "core/security"
+              "core/configuration"
             ]
           },
           {
-            "group": "CLI Reference",
+            "group": "DBDock Cloud",
+            "pages": [
+              "cloud/overview",
+              "cloud/connections",
+              "cloud/backups",
+              "cloud/storage",
+              "cloud/schedules",
+              "cloud/teams",
+              "cloud/mcp",
+              "cloud/billing"
+            ]
+          },
+          {
+            "group": "Cloud Sync",
+            "pages": [
+              "cloud-sync/overview",
+              "cloud-sync/authentication",
+              "cloud-sync/sync",
+              "cloud-sync/data-handling"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "security/overview",
+              "security/encryption",
+              "security/cloud",
+              "security/key-management"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/staging-refresh",
+              "guides/key-rotation",
+              "guides/retention-strategies",
+              "guides/production-checklist"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "help/troubleshooting",
+              "help/faq",
+              "help/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI Reference",
+        "groups": [
+          {
+            "group": "CLI",
             "pages": [
               "cli/overview",
               "cli/init",
@@ -54,14 +123,11 @@
             ]
           },
           {
-            "group": "Migration",
+            "group": "Cloud Sync (CLI)",
             "pages": [
-              "migration/overview",
-              "migration/analyze",
-              "migration/migrate",
-              "migration/schema-mapping",
-              "migration/dry-run",
-              "migration/incremental"
+              "cli/login",
+              "cli/sync",
+              "cli/open"
             ]
           },
           {
@@ -76,6 +142,17 @@
             ]
           },
           {
+            "group": "Migration",
+            "pages": [
+              "migration/overview",
+              "migration/analyze",
+              "migration/migrate",
+              "migration/schema-mapping",
+              "migration/dry-run",
+              "migration/incremental"
+            ]
+          },
+          {
             "group": "Alerts & Automation",
             "pages": [
               "alerts/overview",
@@ -84,16 +161,12 @@
               "alerts/slack",
               "alerts/webhooks"
             ]
-          },
-          {
-            "group": "Guides",
-            "pages": [
-              "guides/staging-refresh",
-              "guides/key-rotation",
-              "guides/retention-strategies",
-              "guides/production-checklist"
-            ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "SDK",
+        "groups": [
           {
             "group": "SDK",
             "pages": [
@@ -103,20 +176,17 @@
               "sdk/scheduling",
               "sdk/alerts"
             ]
-          },
-          {
-            "group": "Help",
-            "pages": [
-              "help/troubleshooting",
-              "help/faq",
-              "help/changelog"
-            ]
           }
         ]
       }
     ],
     "global": {
       "anchors": [
+        {
+          "anchor": "Dashboard",
+          "href": "https://dbdock.xyz",
+          "icon": "gauge"
+        },
         {
           "anchor": "NPM",
           "href": "https://www.npmjs.com/package/dbdock",
@@ -136,7 +206,12 @@
         "label": "Support",
         "href": "https://github.com/dbdock/dbdock/issues"
       }
-    ]
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Go to Dashboard",
+      "href": "https://dbdock.xyz"
+    }
   },
   "contextual": {
     "options": [
@@ -152,7 +227,8 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/dbdock/dbdock"
+      "github": "https://github.com/dbdock/dbdock",
+      "website": "https://dbdock.xyz"
     }
   }
 }

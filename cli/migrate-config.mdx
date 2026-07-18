@@ -7,7 +7,7 @@ description: 'Move legacy secrets from the config file to environment variables.
 npx dbdock migrate-config
 ```
 
-Older versions of DBdock (pre-1.1) stored secrets directly in `dbdock.config.json`. `migrate-config` extracts them and moves them to `.env`, which is where they should be.
+Older versions of DBDock (pre-1.1) stored secrets directly in `dbdock.config.json`. `migrate-config` extracts them and moves them to `.env`, which is where they should be.
 
 ## When to run it
 
@@ -68,12 +68,12 @@ Enable strict mode to prevent regression:
 echo 'DBDOCK_STRICT_MODE=true' >> .env
 ```
 
-DBdock will then refuse to load any config file that still contains secrets.
+DBDock will then refuse to load any config file that still contains secrets.
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Security" icon="lock" href="/core/security">
+  <Card title="Security" icon="lock" href="/security/overview">
     Why secrets don't belong in config files.
   </Card>
   <Card title="Configuration" icon="gear" href="/core/configuration">

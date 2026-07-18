@@ -1,6 +1,6 @@
 ---
 title: 'Troubleshooting'
-description: 'Common DBdock issues and how to fix them.'
+description: 'Common DBDock issues and how to fix them.'
 ---
 
 <Tip>
@@ -11,7 +11,7 @@ description: 'Common DBdock issues and how to fix them.'
 
 ### `pg_dump`, `pg_restore`, or `psql` not found
 
-DBdock uses PostgreSQL's command-line tools. Install them:
+DBDock uses PostgreSQL's command-line tools. Install them:
 
 <AccordionGroup>
   <Accordion title="macOS">
@@ -67,7 +67,7 @@ If `DBDOCK_STRICT_MODE=true` and you see errors about secrets in config, run `mi
 
 ### Missing environment variables
 
-DBdock needs at minimum:
+DBDock needs at minimum:
 
 - **Database** — either `DBDOCK_DB_URL` / `DATABASE_URL`, or `DBDOCK_DB_PASSWORD` (with connection details in the config file)
 - **Storage credentials** if using S3/R2/Cloudinary
@@ -92,7 +92,7 @@ Check your `.env` exists and contains the right variables. See the [configuratio
 
 - Remote server is unreachable
 - If on a cloud VPC, check security groups allow traffic from your runner
-- Increase timeout: not configurable in DBdock, use network/firewall fixes instead
+- Increase timeout: not configurable in DBDock, use network/firewall fixes instead
 
 ### `.pgpass` not being used
 
@@ -210,7 +210,7 @@ Still stuck?
 <Tip>
 When reporting issues, always include:
 
-- DBdock version (`dbdock --version`)
+- DBDock version (`dbdock --version`)
 - Node version (`node --version`)
 - OS
 - Output of `npx dbdock test` (redact any credentials before sharing)

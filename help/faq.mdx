@@ -3,45 +3,86 @@ title: 'FAQ'
 description: 'Quick answers to common questions.'
 ---
 
-## General
+## Supported databases
 
-### Is DBdock free?
+### Which databases does DBDock support?
 
-Yes — MIT licensed, free forever, self-hosted. No SaaS component, no vendor lock-in.
+DBDock supports **nine connection types**: PostgreSQL, MySQL, MariaDB, SQL Server, CockroachDB, Amazon Redshift, TimescaleDB, MongoDB, and Redis.
 
-### Who's behind DBdock?
+| Capability | Engines |
+|---|---|
+| Backup, restore, same-engine copy | PostgreSQL family (PostgreSQL, CockroachDB, Redshift, TimescaleDB), MySQL, MariaDB, SQL Server, Redis |
+| Cross-database migration | MongoDB ↔ PostgreSQL only |
+| Connect and inspect | All nine |
 
-Created by [Naheem Olaide](https://github.com/appdever01). Open-source project, contributions welcome on [GitHub](https://github.com/dbdock/dbdock).
+The PostgreSQL family uses `pg_dump` / `pg_restore`. MySQL and MariaDB use `mysqldump`. SQL Server uses `mssql-scripter` and `sqlcmd`. Redis uses a bundled worker that streams a binary DUMP/RESTORE format.
 
-### Is DBdock production-ready?
-
-DBdock is used in production by multiple teams. The backup and restore pipelines have been stable since v1.0. Cross-database migration (MongoDB ↔ Postgres) is newer — we recommend a dry run before production use.
-
-### How is DBdock different from `pg_dump`?
-
-`pg_dump` is the engine — DBdock builds around it with:
-
-- Storage adapters (S3, R2, Cloudinary, local)
-- Compression and encryption pipelines
-- Retention and scheduling
-- Restore UX with filtering
-- Cross-database migration (MongoDB ↔ Postgres)
-
-Think of DBdock as the "everything around pg_dump" toolkit.
-
-## Installation
-
-### Can I use DBdock without installing it?
-
-Yes — `npx dbdock <command>` works without installing.
-
-### Does DBdock need Node.js?
-
-Yes, Node 18 or later. If you can't install Node, a Docker image is the easiest workaround.
+MongoDB has **no native backup engine** in DBDock today. Use it for analysis and MongoDB ↔ PostgreSQL migration.
 
 ### Which Postgres versions are supported?
 
-DBdock supports whatever your `pg_dump` supports. In practice: Postgres 12+. Match `pg_dump` version to your server version.
+Whatever your installed `pg_dump` supports — in practice Postgres 12+. Match the client tool version to your server version.
+
+### Does DBDock support MySQL, MariaDB, SQL Server, or Redis backups?
+
+Yes. Backup, restore, and same-engine copy jobs work for MySQL, MariaDB, SQL Server, and Redis. Native client tools must be on your `PATH` (`mysqldump`, `mssql-scripter`, `sqlcmd`, etc.).
+
+## General
+
+### Is DBDock free?
+
+Yes — MIT licensed, free forever, self-hosted CLI. No vendor lock-in. The hosted dashboard at [dbdock.xyz](https://dbdock.xyz) has a free tier with managed storage included.
+
+### Who's behind DBDock?
+
+Created by [Naheem Olaide](https://github.com/appdever01). Open-source project, contributions welcome on [GitHub](https://github.com/dbdock/dbdock).
+
+### Is DBDock production-ready?
+
+Backup and restore pipelines are stable across PostgreSQL, MySQL, MariaDB, SQL Server, and Redis. Cross-database migration (MongoDB ↔ Postgres) is newer — run a dry run before production use.
+
+### How is DBDock different from `pg_dump`?
+
+`pg_dump` is the engine for PostgreSQL-family databases. DBDock builds around it (and equivalent tools for other engines) with:
+
+- Storage adapters (local, S3, R2, Cloudinary)
+- Compression and encryption pipelines
+- Retention and scheduling
+- Restore UX with filtering (PostgreSQL family)
+- Cross-database migration (MongoDB ↔ Postgres)
+- Same-engine copy jobs for MySQL, MariaDB, SQL Server, and Redis
+
+Think of DBDock as the toolkit around your database dump tools.
+
+### Is there a hosted DBDock?
+
+The CLI is self-hosted. The [DBDock web app](https://dbdock.xyz) adds a dashboard, managed storage, schedules, alerts, analytics, and billing tiers on top of the same engine layer.
+
+### Is there a GUI?
+
+The hosted dashboard at [dbdock.xyz](https://dbdock.xyz) covers connections, backups, restores, copy jobs, migrations, schedules, and alerts. The CLI remains the option for scripts, CI, and fully self-hosted workflows.
+
+## Installation
+
+### Can I use DBDock without installing it?
+
+Yes — `npx dbdock <command>` works without a global install.
+
+### Does DBDock need Node.js?
+
+Yes, Node 18 or later. If you can't install Node, a Docker image is the easiest workaround.
+
+### What client tools do I need?
+
+At minimum, install the tools for the engines you use:
+
+- **PostgreSQL family** — `pg_dump`, `pg_restore`, `psql`
+- **MySQL / MariaDB** — `mysqldump`, `mysql`
+- **SQL Server** — `mssql-scripter`, `sqlcmd`
+- **Redis** — bundled worker (no extra install)
+- **MongoDB migration** — uses the `mongodb` driver at runtime
+
+Run `npx dbdock test` to validate your setup.
 
 ## Backup behavior
 
@@ -49,78 +90,70 @@ DBdock supports whatever your `pg_dump` supports. In practice: Postgres 12+. Mat
 
 Depends on database size, compression level, and network. Rough ballpark:
 
-- 100 MB DB, local storage: ~2-5 seconds
-- 1 GB DB, S3 us-east-1: ~30-60 seconds
-- 10 GB DB, S3 cross-region: ~5-10 minutes
+- 100 MB DB, local storage: ~2–5 seconds
+- 1 GB DB, S3 us-east-1: ~30–60 seconds
+- 10 GB DB, S3 cross-region: ~5–10 minutes
 
 Run a test backup and measure for your setup.
 
 ### Can I back up a live production database?
 
-Yes — `pg_dump` uses MVCC so it doesn't block reads or writes. Expect:
-
-- Slightly higher CPU during the dump
-- Temporary replication lag on replicas
-- Long-running transactions can hold locks until the dump completes
-
-Run during low-traffic windows if possible.
+Yes — logical dumps use MVCC or engine equivalents so reads and writes continue. Expect slightly higher CPU during the dump and possible replication lag on replicas. Run during low-traffic windows when you can.
 
 ### Can I back up only some tables?
 
-Not directly in the CLI yet — it's a whole-database tool. For partial backups, use `pg_dump --table=...` directly and upload the result yourself.
+PostgreSQL-family restores support selective restore from custom-format dumps. For partial backups at dump time, use engine flags directly (`pg_dump --table=...`, etc.) and upload the result yourself. Table-level backup in the CLI is on the [issue tracker](https://github.com/dbdock/dbdock/issues).
 
-Follow [issue tracker](https://github.com/dbdock/dbdock/issues) for table-level backup support.
+### Does DBDock support incremental backups?
 
-### Does DBdock support incremental backups?
+PostgreSQL logical dumps are full each time. For WAL-based incremental backup, use PostgreSQL's built-in WAL archiving separately.
 
-PostgreSQL doesn't have native incremental dump — DBdock does full logical backups each time. For incremental, use PostgreSQL's built-in WAL archiving separately.
-
-Cross-database **migration** does support incremental mode — see [Incremental migration](/migration/incremental).
+Cross-database **migration** supports incremental mode — see [Incremental migration](/migration/incremental).
 
 ## Restore
 
 ### Can I restore to a different database?
 
-Yes. In `dbdock restore`, choose "New Database Instance (Migrate)" and enter target connection details. See [`dbdock restore`](/cli/restore).
+Yes. In `dbdock restore`, choose "New Database Instance (Migrate)" and enter target connection details. Same-engine copy also works via `dbdock copydb`. See [`dbdock restore`](/cli/restore) and [`dbdock copydb`](/cli/copydb).
 
 ### Can I restore only specific tables?
 
-Not through DBdock. Restore into a temporary database and use `pg_dump --table` to extract what you want, then load into the target.
+PostgreSQL custom-format dumps support selective restore through `pg_restore`. Other engines restore whole databases. Restore into a temporary database and extract what you need if partial restore isn't available for your engine.
 
 ### Can I preview a backup's contents?
 
-Not via DBdock currently. Restore to a temporary database and query it.
+Not via DBDock currently for all engines. Restore to a temporary database and query it, or use native tools (`pg_restore --list` for PostgreSQL custom format).
 
 ## Storage
 
 ### Can I use multiple storage providers simultaneously?
 
-No, DBdock has one active provider per config. Workarounds:
+No — one active provider per config. Workarounds:
 
-- Run multiple DBdock configs (different `dbdock.config.json` paths via `DBDOCK_CONFIG_PATH`)
-- Sync the primary storage to a secondary (S3 cross-region replication, rclone, etc.)
+- Run multiple configs (different `dbdock.config.json` paths via `DBDOCK_CONFIG_PATH`)
+- Sync primary storage to a secondary (S3 cross-region replication, rclone, etc.)
 
 ### How do I migrate backups between providers?
 
-DBdock doesn't have a built-in migrator. Options:
+DBDock doesn't have a built-in migrator. Options:
 
 - **AWS CLI / rclone** — copy files at the storage layer
-- **Manual** — `dbdock list`, download each, re-upload to new provider
-- **Accept split history** — switch providers, new backups go to the new location, old ones stay where they are
+- **Manual** — `dbdock list`, download each, re-upload to the new provider
+- **Accept split history** — switch providers; new backups go to the new location
 
 ### Do backups work with S3 Object Lock?
 
-Yes. Object Lock is set at the bucket level; DBdock just writes objects. Be aware that retention policies (`dbdock cleanup`) can't delete locked objects, so coordinate the two retention systems.
+Yes. Object Lock is set at the bucket level; DBDock writes objects normally. Retention policies (`dbdock cleanup`) can't delete locked objects — coordinate both retention systems.
 
 ## Encryption
 
 ### What's the encryption algorithm?
 
-AES-256-GCM. Key derived via PBKDF2 with 100,000 iterations.
+AES-256-GCM with a versioned backup format. Keys derive via PBKDF2-SHA512 with 100,000 iterations. Legacy backups use AES-256-CBC and still restore.
 
 ### Can I use multiple encryption keys?
 
-Not simultaneously. DBdock reads one key at a time. For rotating keys, see [Key rotation](/guides/key-rotation).
+Not simultaneously. DBDock reads one key at a time. For rotating keys, see [Key rotation](/guides/key-rotation).
 
 ### Can I disable encryption for some backups?
 
@@ -132,7 +165,7 @@ npx dbdock backup --no-encrypt
 
 ### Does encryption slow backups down?
 
-Measurably, but not dramatically. AES-256 on modern CPUs is fast (AES-NI hardware acceleration). Most of the time is still spent in network/compression, not crypto.
+Measurably, but not dramatically. AES-256 on modern CPUs is fast (AES-NI). Most time is still network and compression.
 
 ## Migration
 
@@ -140,38 +173,28 @@ Measurably, but not dramatically. AES-256 on modern CPUs is fast (AES-NI hardwar
 
 Yes. See [Migration overview](/migration/overview).
 
-### Can I migrate MySQL / SQL Server / Oracle?
+### Can I migrate MySQL or SQL Server to PostgreSQL?
 
-Not yet. Current support is PostgreSQL and MongoDB in either direction.
+Not as cross-engine migration. MySQL and SQL Server support **same-engine** backup, restore, and copy. Cross-engine migration is MongoDB ↔ PostgreSQL only today.
 
 ### What about live replication?
 
-DBdock migration is batch-oriented — not live replication. For CDC-style streaming, use Debezium, Airbyte, or similar.
+DBDock migration is batch-oriented — not live replication. For CDC-style streaming, use Debezium, Airbyte, or similar.
 
 ## Development
 
-### Does DBdock have a TypeScript SDK?
+### Does DBDock have a TypeScript SDK?
 
 Yes. All programmatic APIs have TypeScript definitions. See [SDK overview](/sdk/overview).
 
-### Can I extend DBdock with custom storage providers?
+### Can I extend DBDock with custom storage providers?
 
-Currently the four built-in providers (local, S3, R2, Cloudinary) are hardcoded. Adding a new provider means contributing a new adapter — [open a PR](https://github.com/dbdock/dbdock/pulls).
+The four built-in providers (local, S3, R2, Cloudinary) are hardcoded. Adding a new provider means contributing a new adapter — [open a PR](https://github.com/dbdock/dbdock/pulls).
 
 ### Where do I report bugs?
 
 - [GitHub issues](https://github.com/dbdock/dbdock/issues)
 - Security issues privately via [security advisory](https://github.com/dbdock/dbdock/security/advisories/new)
-
-## Pricing / hosting
-
-### Is there a hosted DBdock?
-
-Not currently. DBdock is a self-hosted CLI. You provide the compute, DBdock provides the logic.
-
-### Is there a GUI?
-
-Not currently. The CLI has interactive pickers for many operations. For a web dashboard, follow [issue tracker](https://github.com/dbdock/dbdock/issues).
 
 ## Still have questions?
 

@@ -1,0 +1,59 @@
+---
+title: "Schedules"
+description: "Automate backups in DBDock Cloud with cron-based schedules that run for you — with retries, per-schedule run history, and skip controls."
+icon: "calendar-days"
+---
+
+A schedule runs a backup automatically on a cron cadence. DBDock Cloud executes it for you — there's no cron daemon to run or server to keep awake.
+
+## Create a schedule
+
+<Steps>
+  <Step title="Open Schedules → New schedule">
+    Choose the [connection](/cloud/connections) and [storage](/cloud/storage) destination.
+  </Step>
+  <Step title="Set the cadence">
+    Pick a cron expression — for example, `0 2 * * *` for every night at 2 AM.
+  </Step>
+  <Step title="Save and enable">
+    DBDock queues the next run and shows when it will happen next on your dashboard's **Up next**.
+  </Step>
+</Steps>
+
+## Run history
+
+Each schedule keeps a full history of its runs. Open a schedule to see every backup it produced, with status, timing, and logs — so you can confirm last night's job succeeded at a glance.
+
+## Reliability
+
+<CardGroup cols={2}>
+  <Card title="Retries" icon="rotate">
+    Transient failures are retried automatically, so a brief network blip doesn't cost you a backup.
+  </Card>
+  <Card title="Skip next" icon="forward">
+    Skip the next scheduled run — handy before planned maintenance — without deleting the schedule.
+  </Card>
+</CardGroup>
+
+<Note>
+  Schedules run in the cloud even when your machine is off. To automate from your own environment instead, use [`dbdock schedule`](/cli/schedule) in the CLI.
+</Note>
+
+## Alerts
+
+Pair schedules with [alerts](/alerts/overview) so you hear about failures immediately over email, Slack, or a webhook — instead of discovering them when you need a restore.
+
+## Plan availability
+
+Scheduling is available on paid plans, with per-plan limits on how many schedules you can run. See [Billing](/cloud/billing).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Backups" icon="shield-check" href="/cloud/backups">
+    What each run produces.
+  </Card>
+  <Card title="Alerts" icon="bell" href="/alerts/overview">
+    Get notified on failure.
+  </Card>
+</CardGroup>

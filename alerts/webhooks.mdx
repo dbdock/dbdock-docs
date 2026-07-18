@@ -3,7 +3,7 @@ title: 'Custom webhooks'
 description: 'Send alerts to Discord, Teams, WhatsApp, or any HTTP endpoint.'
 ---
 
-DBdock can POST alerts to any HTTP endpoint. This opens the door to Discord, Microsoft Teams, WhatsApp via third-party bridges, and your own internal services.
+DBDock can POST alerts to any HTTP endpoint. This opens the door to Discord, Microsoft Teams, WhatsApp via third-party bridges, and your own internal services.
 
 ## Configuration
 
@@ -11,7 +11,7 @@ DBdock can POST alerts to any HTTP endpoint. This opens the door to Discord, Mic
 DBDOCK_CUSTOM_WEBHOOK=https://your-service.example.com/api/hooks/dbdock
 ```
 
-DBdock POSTs a JSON payload to that URL on every backup event.
+DBDock POSTs a JSON payload to that URL on every backup event.
 
 ## Payload shape
 
@@ -57,7 +57,7 @@ Discord accepts Slack-formatted payloads at its webhook URL with `/slack` append
 https://discord.com/api/webhooks/<id>/<token>/slack
 ```
 
-Set that as your `DBDOCK_SLACK_WEBHOOK` (not the custom webhook) — DBdock's Slack alerts format correctly for Discord.
+Set that as your `DBDOCK_SLACK_WEBHOOK` (not the custom webhook) — DBDock's Slack alerts format correctly for Discord.
 
 For richer Discord messages, use the custom webhook and write your own translator service.
 
@@ -78,7 +78,7 @@ Point `DBDOCK_CUSTOM_WEBHOOK` at your bridge service, which then forwards to Wha
 
 ## Writing your own bridge
 
-A minimal Node.js bridge that receives DBdock alerts and forwards them:
+A minimal Node.js bridge that receives DBDock alerts and forwards them:
 
 ```javascript
 const express = require('express');
@@ -106,7 +106,7 @@ Deploy anywhere (Cloud Run, Lambda, your own server) and set `DBDOCK_CUSTOM_WEBH
 
 - POST with `Content-Type: application/json`
 - 10-second timeout
-- No retries — if your endpoint is down, the alert is lost (DBdock logs the error)
+- No retries — if your endpoint is down, the alert is lost (DBDock logs the error)
 - Alert delivery does not block backup completion
 
 ## Security

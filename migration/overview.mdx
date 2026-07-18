@@ -3,7 +3,7 @@ title: 'Migration overview'
 description: 'Cross-database migration between MongoDB and PostgreSQL.'
 ---
 
-DBdock can move data between **MongoDB and PostgreSQL** in either direction. It's designed for the case where you've outgrown MongoDB and want to land on Postgres (or vice versa) — not as a live replication tool.
+DBDock can move data between **MongoDB and PostgreSQL** in either direction. It's designed for the case where you've outgrown MongoDB and want to land on Postgres (or vice versa) — not as a live replication tool.
 
 ## What gets migrated
 
@@ -35,7 +35,7 @@ DBdock can move data between **MongoDB and PostgreSQL** in either direction. It'
     See [dbdock analyze](/migration/analyze).
   </Step>
   <Step title="Plan the migration">
-    DBdock generates a schema mapping proposal you can review and customize.
+    DBDock generates a schema mapping proposal you can review and customize.
 
     See [Schema mapping](/migration/schema-mapping).
   </Step>
@@ -72,7 +72,7 @@ DBdock can move data between **MongoDB and PostgreSQL** in either direction. It'
 
 ### MongoDB → PostgreSQL
 
-The most common direction. DBdock:
+The most common direction. DBDock:
 
 - Flattens nested documents up to a configurable depth (default: 2 levels)
 - Stores deeper nesting as `jsonb` columns
@@ -81,7 +81,7 @@ The most common direction. DBdock:
 
 ### PostgreSQL → MongoDB
 
-Also supported. DBdock:
+Also supported. DBDock:
 
 - Maps tables to collections
 - Converts rows to documents, preserving column types

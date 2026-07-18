@@ -21,7 +21,7 @@ Provided the `alerts` section of your config is enabled, success and failure not
 
 ## Manual alerts
 
-For custom events (not tied to a DBdock backup operation), use `AlertService`:
+For custom events (not tied to a DBDock backup operation), use `AlertService`:
 
 ```javascript
 const { createDBDock, AlertService } = require('dbdock');
@@ -84,7 +84,7 @@ Or programmatically toggle by reloading config per-environment.
 
 ## Custom alert content
 
-If the built-in alert content doesn't fit your needs, use your own alerting code and disable DBdock's alerts:
+If the built-in alert content doesn't fit your needs, use your own alerting code and disable DBDock's alerts:
 
 ```javascript
 const { createDBDock, BackupService } = require('dbdock');
